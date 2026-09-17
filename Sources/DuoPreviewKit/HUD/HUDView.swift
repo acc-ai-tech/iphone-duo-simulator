@@ -184,6 +184,7 @@ struct HUDView: View {
                 divider
                 optionToggle("3D", \.show3D, tint: .orange)
                     .accessibilityLabel("3D view (half-open)")
+                divider
                 angle
             }
             if advanced {
@@ -314,7 +315,7 @@ struct HUDView: View {
 
     private var animation: some View {
         HStack(spacing: 6) {
-            Text("Animation").foregroundStyle(.secondary).fixedSize()
+            Text("Animation").foregroundStyle(.secondary).fixedSize().padding(.leading, 10)
             // realistic: snapshot leaves fold in 3D; none: instant.
             ForEach([(DuoAnimation.Kind.realistic, "3D fold"), (.none, "Instant")], id: \.0) { kind, title in
                 Button(title) { model.setAnimationKind(kind) }
