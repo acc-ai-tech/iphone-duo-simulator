@@ -335,7 +335,8 @@ final class SideToolbarView: UIView {
         let statusHeight: CGFloat = topInset + 60
         // Column of pill width, pinned to the right edge with a margin.
         let rightInset: CGFloat = 14
-        let columnX = max(bounds.width - rightInset - Self.pillWidth, 0)
+        // Never cross the safe area line at x = 0, even if the strip is configured narrower.
+        let columnX = max(bounds.width - rightInset - Self.pillWidth, 3)
         status.frame = CGRect(x: columnX, y: topInset, width: Self.pillWidth, height: statusHeight - topInset)
         scrollView.frame = CGRect(x: 0, y: statusHeight, width: bounds.width, height: max(bounds.height - statusHeight, 0))
         let size = stack.systemLayoutSizeFitting(CGSize(width: Self.pillWidth, height: UIView.layoutFittingCompressedSize.height),
@@ -391,7 +392,8 @@ final class SideToolbarView: UIView {
         return pill
     }
 
-    private static let pillWidth: CGFloat = 50
+    /// With the default 61 pt strip and 14 pt right margin this leaves a small gap to the dashed safe area line.
+    private static let pillWidth: CGFloat = 44
 
     static func button(image: UIImage?, label: String, action: @escaping () -> Void) -> UIButton {
         var configuration = UIButton.Configuration.plain()
