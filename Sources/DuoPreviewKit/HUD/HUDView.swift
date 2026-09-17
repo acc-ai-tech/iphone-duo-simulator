@@ -198,6 +198,8 @@ struct HUDView: View {
                     optionToggle("Right toolbar", \.sideToolbar)
                         .accessibilityHint("Moves navigation bar buttons to the right edge in Open Landscape and Outer")
                     optionToggle("Line", \.safeAreaLine)
+                    optionToggle("Modals right", \.modalsOnHalf)
+                        .accessibilityHint("Keeps sheets and alerts in the half right of the hinge")
                     Spacer(minLength: 0)
                 }
             }

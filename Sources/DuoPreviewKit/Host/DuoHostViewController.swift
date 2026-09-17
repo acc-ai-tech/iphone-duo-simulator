@@ -47,6 +47,7 @@ final class DuoHostViewController: UIViewController {
     var isAnimating = false
     private var liveLeaves: LeafSnapshotter?
     private(set) lazy var sideToolbar = SideToolbarController(host: self)
+    private(set) lazy var modalPlacement = ModalPlacement(host: self)
     private var lastTraits: (DuoSizeClassRule, DuoPosture, DuoHinge)?
 
     init(content: UIViewController, runtime: DuoRuntime) {
@@ -142,6 +143,7 @@ final class DuoHostViewController: UIViewController {
         becomeFirstResponder()
         updateAuxiliary()
         sideToolbar.update()
+        modalPlacement.start()
     }
 
     /// The host window changed size (iPad rotation). The content keeps its Duo size, so the new size is
@@ -387,6 +389,9 @@ final class DuoHostViewController: UIViewController {
         previewBadge.isHidden = true
         overlay.hide()
     }
+
+    /// `true` while the device is drawn as 3D snapshot leaves (static half-open view).
+    var isShowingLeaves: Bool { liveLeaves != nil }
 
     /// Puts the fold overlay above the device (and the 3D badge above the overlay).
     func raiseOverlay() {

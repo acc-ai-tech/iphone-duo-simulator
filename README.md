@@ -158,7 +158,7 @@ duo unfold
 duo state.inner.portrait     # outer, inner.landscape, inner.portrait, inner.split.half, inner.split.stacked
 duo angle.90                 # 0–180 in steps of 5
 duo anim.realistic           # realistic, none
-duo option.3d.on             # frame, hinge, 3d, blur, sidetoolbar, safearealine, sizes, hud, advanced + .on / .off
+duo option.3d.on             # frame, hinge, 3d, blur, sidetoolbar, safearealine, modalshalf, sizes, hud, advanced + .on / .off
 duo report                   # writes Library/Caches/duolab-report.json in the app container
 duo screenshots              # writes Documents/DuoPreview/<timestamp>/ in the app container
 duo stress                   # runs the stress test
@@ -200,10 +200,20 @@ Launch arguments:
 | `-screen <name>` | Open a screen on launch. UIKit: `feed`, `gallery`, `article`, `chat`, `form`, `video`, `modals`, `deepNavigation`, `posture`. SwiftUI: `library`, `grid`, `reader`, `compose`, `player`, `settings`, `posture` |
 | `-duoPresets /path/to/presets.json` | Load custom presets |
 
+## Modals while half-open
+
+While the device is half-open, sheets, form sheets and alerts are moved into the half past the hinge: right of it in
+landscape, below it in portrait. With the 3D view on they are folded along with that half. Fully open and outer states
+leave presentations where UIKit puts them. Toggle with **Modals right** in the advanced panel or
+`duo option.modalshalf.off`.
+
+This uses no private API, but UIKit offers no hook for placing presentations, so the emulator repositions the container
+view UIKit creates. Popovers anchored to a source view and the keyboard are still placed by UIKit.
+
 ## Known limitations
 
-- Form sheets, page sheets, alerts, popovers and the keyboard are positioned relative to the iPad window, not the
-  emulated screen. `.currentContext` and `.overCurrentContext` presentations stay inside.
+- Fully open and outer states: form sheets, page sheets, alerts, popovers and the keyboard are positioned relative to
+  the iPad window, not the emulated screen. `.currentContext` and `.overCurrentContext` presentations stay inside.
 - The status bar and home indicator belong to the iPad. Emulated safe areas come from the JSON (zero for now).
 - The 3D half-open view shows periodic snapshots, so interaction is disabled while it's on. Rendering live content on two
   rotated halves isn't possible with public API.

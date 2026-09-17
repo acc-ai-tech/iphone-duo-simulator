@@ -23,6 +23,7 @@ struct DuoOptions: Codable, Equatable {
         blurOnFold = try c.decodeIfPresent(Bool.self, forKey: .blurOnFold) ?? d.blurOnFold
         sideToolbar = try c.decodeIfPresent(Bool.self, forKey: .sideToolbar) ?? d.sideToolbar
         safeAreaLine = try c.decodeIfPresent(Bool.self, forKey: .safeAreaLine) ?? d.safeAreaLine
+        modalsOnHalf = try c.decodeIfPresent(Bool.self, forKey: .modalsOnHalf) ?? d.modalsOnHalf
         showSizes = try c.decodeIfPresent(Bool.self, forKey: .showSizes) ?? d.showSizes
         hudVisible = try c.decodeIfPresent(Bool.self, forKey: .hudVisible) ?? d.hudVisible
         hudCollapsed = try c.decodeIfPresent(Bool.self, forKey: .hudCollapsed) ?? d.hudCollapsed
@@ -36,6 +37,8 @@ struct DuoOptions: Codable, Equatable {
     var sideToolbar = true
     /// Dashed line marking where the side toolbar safe area starts. Off by default: it is a debugging aid.
     var safeAreaLine = false
+    /// Keep modal presentations inside the half of the inner screen right of the hinge.
+    var modalsOnHalf = true
     var showSizes = true
     var hudVisible = true
     var hudCollapsed = false
