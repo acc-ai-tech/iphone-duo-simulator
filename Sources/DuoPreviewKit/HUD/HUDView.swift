@@ -163,10 +163,7 @@ struct HUDView: View {
                 presets
             }
             HStack(spacing: 8) {
-                foldButton
-                angleButton("0", model.config.angles.closed)
-                angleButton("90", model.config.angles.halfOpen)
-                angleButton("180", model.config.angles.open)
+                postureControl
                 Spacer(minLength: 0)
             }
         }
@@ -184,10 +181,7 @@ struct HUDView: View {
             HStack(spacing: 12) {
                 presets
                 divider
-                foldButton
-                angleButton("0", model.config.angles.closed)
-                angleButton("90", model.config.angles.halfOpen)
-                angleButton("180", model.config.angles.open)
+                postureControl
                 Spacer(minLength: 0)
             }
             HStack(spacing: 10) {
@@ -206,6 +200,10 @@ struct HUDView: View {
                     optionToggle("Frame", \.showFrame)
                     optionToggle("Hinge", \.showHinge)
                     optionToggle("Sizes", \.showSizes)
+                    divider
+                    optionToggle("Right toolbar", \.sideToolbar)
+                        .accessibilityHint("Moves navigation bar buttons to the right edge in Open Landscape and Outer")
+                    optionToggle("Line", \.safeAreaLine)
                     if model.animationKind == .continuous {
                         divider
                         stepsStepper
@@ -243,8 +241,6 @@ struct HUDView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Spacer(minLength: 4)
-            optionToggle("Side toolbar", \.sideToolbar)
-                .accessibilityHint("Moves navigation bar buttons to the right edge in Open Landscape and Outer")
             if !model.status.isEmpty {
                 Text(model.status).font(.system(size: 13)).foregroundStyle(.orange).lineLimit(1).truncationMode(.middle)
             }
@@ -305,15 +301,25 @@ struct HUDView: View {
         }
     }
 
-    private var foldButton: some View {
-        Button {
-            model.toggleFold()
-        } label: {
-            Label(model.layout.display == .outer ? "Unfold" : "Fold",
-                  systemImage: model.layout.display == .outer ? "book" : "book.closed")
+    /// Closed / half-open / open, the three postures the API reports.
+    private var postureControl: some View {
+        HStack(spacing: 6) {
+            postureButton("Closed", systemImage: "book.closed", angle: model.config.angles.closed, posture: .closed)
+            postureButton("Half-open", systemImage: "book.pages", angle: model.config.angles.halfOpen, posture: .halfOpen)
+            postureButton("Open", systemImage: "book", angle: model.config.angles.open, posture: .open)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(.indigo)
+    }
+
+    private func postureButton(_ title: String, systemImage: String, angle: Double, posture: DuoPosture) -> some View {
+        let selected = model.layout.posture == posture
+        return Button {
+            model.setAngle(angle, animated: true)
+        } label: {
+            Label(title, systemImage: systemImage)
+        }
+        .buttonStyle(.bordered)
+        .tint(selected ? .indigo : .gray)
+        .font(.system(size: 15, weight: selected ? .semibold : .regular))
         .fixedSize()
     }
 
@@ -350,12 +356,6 @@ struct HUDView: View {
                 }
             Text("\(Int(model.sliderAngle))°").monospacedDigit().frame(width: 48, alignment: .trailing)
         }
-    }
-
-    private func angleButton(_ title: String, _ angle: Double) -> some View {
-        Button(title) { model.setAngle(angle, animated: true) }
-            .buttonStyle(.bordered)
-            .font(.system(size: 15).monospacedDigit())
     }
 
     private var customSize: some View {

@@ -105,6 +105,7 @@ final class SideToolbarController {
             signature = newSignature
             view.setGroups(groups)
         }
+        view.showsBoundary = host.runtime.options.safeAreaLine
         view.updateClock()
     }
 
@@ -270,6 +271,9 @@ final class SideToolbarView: UIView {
     private let stack = UIStackView()
     /// Dashed vertical line marking where the added right safe area begins.
     private let boundary = CAShapeLayer()
+    var showsBoundary = true {
+        didSet { if showsBoundary != oldValue { setNeedsLayout() } }
+    }
     /// Status bar stand-in at the top of the strip: time and Wi‑Fi.
     private let status = UIStackView()
     private let clock = UILabel()
@@ -329,6 +333,7 @@ final class SideToolbarView: UIView {
         boundary.path = path.cgPath
         boundary.frame = bounds
         boundary.strokeColor = UIColor.label.withAlphaComponent(0.3).resolvedColor(with: traitCollection).cgColor
+        boundary.isHidden = !showsBoundary
         CATransaction.commit()
 
         let topInset: CGFloat = 20

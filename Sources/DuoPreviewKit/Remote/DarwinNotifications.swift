@@ -7,6 +7,7 @@ import Foundation
 /// xcrun simctl spawn booted notifyutil -p com.duolab.state.inner.portrait
 /// xcrun simctl spawn booted notifyutil -p com.duolab.angle.90
 /// xcrun simctl spawn booted notifyutil -p com.duolab.option.3d.on
+/// xcrun simctl spawn booted notifyutil -p com.duolab.screenshots
 /// ```
 @MainActor
 final class DarwinNotificationListener {
@@ -16,7 +17,7 @@ final class DarwinNotificationListener {
     init(runtime: DuoRuntime) {
         let config = runtime.config
         var names = config.presets.map { "\(Self.prefix)state.\($0.id)" }
-        names += ["fold", "unfold", "report"].map { Self.prefix + $0 }
+        names += ["fold", "unfold", "report", "screenshots", "stress"].map { Self.prefix + $0 }
         names += DuoAnimation.Kind.allCases.map { "\(Self.prefix)anim.\($0.rawValue)" }
         names += Self.options.keys.flatMap { ["\(Self.prefix)option.\($0).on", "\(Self.prefix)option.\($0).off"] }
         let step = max(Int(config.angles.remoteStep), 1)
@@ -41,7 +42,7 @@ final class DarwinNotificationListener {
 
     /// `com.duolab.option.<name>.on|off`
     static let options: [String: WritableKeyPath<DuoOptions, Bool>] = [
-        "frame": \.showFrame, "hinge": \.showHinge, "3d": \.show3D, "blur": \.blurOnFold, "sidetoolbar": \.sideToolbar, "sizes": \.showSizes, "hud": \.hudVisible, "advanced": \.hudAdvanced,
+        "frame": \.showFrame, "hinge": \.showHinge, "3d": \.show3D, "blur": \.blurOnFold, "sidetoolbar": \.sideToolbar, "safearealine": \.safeAreaLine, "sizes": \.showSizes, "hud": \.hudVisible, "advanced": \.hudAdvanced,
     ]
 
     static func handle(_ name: String) {
@@ -55,6 +56,10 @@ final class DarwinNotificationListener {
             DuoPreview.unfold(animation: runtime.animation)
         } else if command == "report" {
             Reporter.write()
+        } else if command == "screenshots" {
+            Task { await DuoPreview.captureAllStates() }
+        } else if command == "stress" {
+            Task { await DuoPreview.runStressTest() }
         } else if command.hasPrefix("state.") {
             DuoPreview.setPreset(String(command.dropFirst("state.".count)), animation: runtime.animation)
         } else if command.hasPrefix("angle."), let angle = Double(command.dropFirst("angle.".count)) {

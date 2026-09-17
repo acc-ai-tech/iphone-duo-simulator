@@ -128,8 +128,10 @@ See `Sources/DuoPreviewKit/Config/DuoPresets.json` for the format.
 
 The panel sits above the device. Drag it by the header or collapse it into a button.
 
-- **Simple mode**: presets, fold/unfold, 0°/90°/180°, animation style, blur, 3D view, hinge angle slider and screenshots
-- **Advanced mode** adds the stress test, a custom screen size, frame/hinge/size overlays and live resize steps
+- **Simple mode**: presets, posture (closed / half-open / open), animation style, blur, 3D view, the hinge angle slider
+  and screenshots
+- **Advanced mode** adds the stress test, a custom screen size, the frame/hinge/size overlays, the right toolbar and its
+  safe area line, and live resize steps
 
 Press ⌘⇧D or double-tap with three fingers to show or hide the panel.
 
@@ -156,15 +158,18 @@ duo unfold
 duo state.inner.portrait     # outer, inner.landscape, inner.portrait, inner.split.half, inner.split.stacked
 duo angle.90                 # 0–180 in steps of 5
 duo anim.continuous          # realistic, continuous, none
-duo option.3d.on             # frame, hinge, 3d, blur, sidetoolbar, sizes, hud, advanced + .on / .off
+duo option.3d.on             # frame, hinge, 3d, blur, sidetoolbar, safearealine, sizes, hud, advanced + .on / .off
 duo report                   # writes Library/Caches/duolab-report.json in the app container
+duo screenshots              # writes Documents/DuoPreview/<timestamp>/ in the app container
+duo stress                   # runs the stress test
 ```
 
 ## Side toolbar
 
 On the outer screen and the open landscape inner screen, the navigation bar and toolbar of your app are hidden and their
 buttons move into a glass capsule on the right edge. Your content gets a matching right safe area inset, and a dashed
-line marks where it starts. When the device
+line marks where it starts (turn the line off with the **Line** toggle in the advanced panel or
+`duo option.safearealine.off`). When the device
 is half-open, your app's own bars come back.
 
 Turn it off from the panel or with `duo option.sidetoolbar.off`. Configure it per preset with `"sideToolbar"` and set the

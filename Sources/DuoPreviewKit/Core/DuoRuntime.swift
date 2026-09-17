@@ -22,6 +22,7 @@ struct DuoOptions: Codable, Equatable {
         show3D = try c.decodeIfPresent(Bool.self, forKey: .show3D) ?? d.show3D
         blurOnFold = try c.decodeIfPresent(Bool.self, forKey: .blurOnFold) ?? d.blurOnFold
         sideToolbar = try c.decodeIfPresent(Bool.self, forKey: .sideToolbar) ?? d.sideToolbar
+        safeAreaLine = try c.decodeIfPresent(Bool.self, forKey: .safeAreaLine) ?? d.safeAreaLine
         showSizes = try c.decodeIfPresent(Bool.self, forKey: .showSizes) ?? d.showSizes
         hudVisible = try c.decodeIfPresent(Bool.self, forKey: .hudVisible) ?? d.hudVisible
         hudCollapsed = try c.decodeIfPresent(Bool.self, forKey: .hudCollapsed) ?? d.hudCollapsed
@@ -33,6 +34,8 @@ struct DuoOptions: Codable, Equatable {
     var show3D = true
     var blurOnFold = true
     var sideToolbar = true
+    /// Dashed line marking where the side toolbar safe area starts.
+    var safeAreaLine = true
     var showSizes = true
     var hudVisible = true
     var hudCollapsed = false
