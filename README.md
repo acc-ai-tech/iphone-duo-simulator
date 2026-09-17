@@ -130,8 +130,8 @@ The panel sits above the device. Drag it by the header or collapse it into a but
 
 - **Simple mode**: presets, posture (closed / half-open / open), animation style, blur, 3D view, the hinge angle slider
   and screenshots
-- **Advanced mode** adds the stress test, a custom screen size, the frame/hinge/size overlays, the right toolbar and its
-  safe area line, and live resize steps
+- **Advanced mode** adds the stress test, a custom screen size, the frame/hinge/size overlays, and the right toolbar
+  with its safe area line
 
 Press ⌘⇧D or double-tap with three fingers to show or hide the panel.
 
