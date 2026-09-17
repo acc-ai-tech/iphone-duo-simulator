@@ -49,12 +49,15 @@ public struct DuoPreset: Codable, Sendable, Equatable, Identifiable {
     public var safeAreaInsets: DuoInsets
     public var sizeClass: DuoSizeClassRule
     public var hinge: DuoHingeAxis
+    /// Move navigation bar / toolbar buttons into a strip on the right edge (see `sideToolbarWidth`).
+    public var sideToolbar: Bool
 
     public var size: CGSize { CGSize(width: width, height: height) }
     public var displayTitle: String { title ?? id }
 
     private enum CodingKeys: String, CodingKey {
         case id, title, display, orientation, split, width, height, screen, originX, originY, safeAreaInsets, sizeClass, hinge
+        case sideToolbar
     }
 
     public init(from decoder: any Decoder) throws {
@@ -72,6 +75,7 @@ public struct DuoPreset: Codable, Sendable, Equatable, Identifiable {
         safeAreaInsets = try c.decodeIfPresent(DuoInsets.self, forKey: .safeAreaInsets) ?? .zero
         sizeClass = try c.decode(DuoSizeClassRule.self, forKey: .sizeClass)
         hinge = try c.decodeIfPresent(DuoHingeAxis.self, forKey: .hinge) ?? .none
+        sideToolbar = try c.decodeIfPresent(Bool.self, forKey: .sideToolbar) ?? false
     }
 }
 
@@ -123,6 +127,8 @@ public struct DuoConfiguration: Codable, Sendable, Equatable {
     public var bezelWidth: Double
     public var hingeWidth: Double
     public var displaySwitchAngle: Double
+    /// Width of the right-edge strip that receives navigation buttons for presets with `sideToolbar`.
+    public var sideToolbarWidth: Double
     public var posture: PostureThresholds
     public var angles: Angles
     public var animation: Animation

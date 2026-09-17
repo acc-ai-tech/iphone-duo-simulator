@@ -172,6 +172,46 @@ final class HostTests: XCTestCase {
         XCTAssertFalse(runtime.options.showFrame)
     }
 
+    func testSideToolbarMovesBarButtonsAndAddsSafeArea() async throws {
+        var tapped = 0
+        let detail = UIViewController()
+        detail.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "star"),
+                                                                    primaryAction: UIAction { _ in tapped += 1 })
+        navigation.pushViewController(detail, animated: false)
+        try await apply("inner.landscape")
+        let host = try host
+        host.sideToolbar.update()
+        let width = runtime.config.sideToolbarWidth
+
+        XCTAssertTrue(host.sideToolbar.isActive)
+        XCTAssertTrue(navigation.isNavigationBarHidden)
+        XCTAssertEqual(navigation.additionalSafeAreaInsets.right, width)
+        let buttons = allButtons(in: host.sideToolbar.view)
+        XCTAssertEqual(buttons.map(\.accessibilityLabel), ["Back", "Bar item"])
+        buttons[1].sendActions(for: .primaryActionTriggered)
+        XCTAssertEqual(tapped, 1)
+
+        // Half-open keeps the app's own bars.
+        DuoPreview.setHingeAngle(90, animated: false)
+        XCTAssertFalse(host.sideToolbar.isActive)
+        XCTAssertFalse(navigation.isNavigationBarHidden)
+        XCTAssertEqual(navigation.additionalSafeAreaInsets.right, 0)
+
+        try await apply("outer")
+        host.sideToolbar.update()
+        XCTAssertTrue(navigation.isNavigationBarHidden)
+        allButtons(in: host.sideToolbar.view).first?.sendActions(for: .primaryActionTriggered)
+        XCTAssertEqual(navigation.viewControllers.count, 1, "back button pops")
+
+        try await apply("inner.portrait")
+        XCTAssertFalse(host.sideToolbar.isActive)
+        XCTAssertFalse(navigation.isNavigationBarHidden)
+    }
+
+    private func allButtons(in view: UIView) -> [UIButton] {
+        view.subviews.flatMap { ($0 as? UIButton).map { [$0] } ?? allButtons(in: $0) }
+    }
+
     func testImageDiffCountsChangedPixels() {
         let size = CGSize(width: 20, height: 10)
         let format = UIGraphicsImageRendererFormat()

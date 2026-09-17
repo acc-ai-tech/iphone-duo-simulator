@@ -46,6 +46,7 @@ final class DuoHostViewController: UIViewController {
     /// Set while an animator drives frames; blocks automatic relayout.
     var isAnimating = false
     private var liveLeaves: LeafSnapshotter?
+    private(set) lazy var sideToolbar = SideToolbarController(host: self)
     private var lastTraits: (DuoSizeClassRule, DuoPosture, DuoHinge)?
 
     init(content: UIViewController, runtime: DuoRuntime) {
@@ -77,6 +78,8 @@ final class DuoHostViewController: UIViewController {
 
         contentContainer.clipsToBounds = true
         screenView.addSubview(contentContainer)
+
+        screenView.addSubview(sideToolbar.view)
 
         hingeView.isUserInteractionEnabled = false
         screenView.addSubview(hingeView)
@@ -117,6 +120,7 @@ final class DuoHostViewController: UIViewController {
 
         applyTraits(layout: layout(for: displayedState), angle: displayedState.hingeAngle)
         applyStyle()
+        sideToolbar.update()
 
         let tap = UITapGestureRecognizer(target: self, action: #selector(threeFingerDoubleTap))
         tap.numberOfTouchesRequired = 3
@@ -137,6 +141,7 @@ final class DuoHostViewController: UIViewController {
         super.viewDidAppear(animated)
         becomeFirstResponder()
         updateAuxiliary()
+        sideToolbar.update()
     }
 
     /// The host window changed size (iPad rotation). The content keeps its Duo size, so the new size is
@@ -215,6 +220,9 @@ final class DuoHostViewController: UIViewController {
         placeholderView.contentFrame = geometry.contentFrame
         placeholderView.isHidden = geometry.contentFrame.size == geometry.screenSize
         contentContainer.frame = geometry.contentFrame
+        let toolbarWidth = sideToolbar.width
+        sideToolbar.view.frame = CGRect(x: geometry.contentFrame.maxX - toolbarWidth, y: geometry.contentFrame.minY,
+                                        width: toolbarWidth, height: geometry.contentFrame.height)
         hingeView.frame = screenView.bounds
         hingeView.update(axis: geometry.angle >= config.displaySwitchAngle ? geometry.hingeAxis : .none,
                          angle: geometry.angle, config: config, visible: runtime.options.showHinge)
@@ -230,7 +238,8 @@ final class DuoHostViewController: UIViewController {
         let preset = layout(for: displayedState).safeAreaInsets
         let real = contentContainer.safeAreaInsets
         let insets = UIEdgeInsets(top: max(0, preset.top - real.top), left: max(0, preset.left - real.left),
-                                  bottom: max(0, preset.bottom - real.bottom), right: max(0, preset.right - real.right))
+                                  bottom: max(0, preset.bottom - real.bottom),
+                                  right: max(0, preset.right - real.right) + sideToolbar.width)
         if content.additionalSafeAreaInsets != insets {
             content.additionalSafeAreaInsets = insets
         }
@@ -289,6 +298,7 @@ final class DuoHostViewController: UIViewController {
         displayedState = state
         let newLayout = layout(for: state)
         applyTraits(layout: newLayout, angle: state.hingeAngle)
+        if isViewLoaded { sideToolbar.update() }
         if let coordinator, newLayout.contentFrame.size != oldSize {
             content.viewWillTransition(to: newLayout.contentFrame.size, with: coordinator)
         }
@@ -333,6 +343,7 @@ final class DuoHostViewController: UIViewController {
 
     func optionsDidChange() {
         applyStyle()
+        sideToolbar.update()
         view.setNeedsLayout()
         if !isAnimating {
             layoutGeometry(geometry)
@@ -403,17 +414,19 @@ final class DuoHostViewController: UIViewController {
 
 /// Fills the unused part of the inner screen in split presets.
 final class SplitPlaceholderView: UIView {
-    private let label = UILabel()
+    /// Barely visible glyph marking the area of another app.
+    private let icon = UIImageView(image: UIImage(systemName: "square.grid.2x2"))
     var contentFrame: CGRect = .zero { didSet { setNeedsLayout() } }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = UIColor(white: 0.12, alpha: 1)
-        label.text = "Other app"
-        label.textColor = UIColor(white: 0.4, alpha: 1)
-        label.font = .systemFont(ofSize: 15, weight: .medium)
-        label.textAlignment = .center
-        addSubview(label)
+        icon.tintColor = UIColor(white: 1, alpha: 0.12)
+        icon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 44, weight: .regular)
+        icon.contentMode = .center
+        icon.isAccessibilityElement = true
+        icon.accessibilityLabel = "Other app"
+        addSubview(icon)
     }
 
     @available(*, unavailable)
@@ -421,7 +434,7 @@ final class SplitPlaceholderView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        // Center the label in the half that the content does not cover.
+        // Center the icon in the part that the content does not cover.
         let content = contentFrame
         var free = bounds
         if content.width < bounds.width {
@@ -429,7 +442,7 @@ final class SplitPlaceholderView: UIView {
         } else if content.height < bounds.height {
             free = CGRect(x: 0, y: content.maxY, width: bounds.width, height: bounds.height - content.maxY)
         }
-        label.frame = free
+        icon.frame = free
     }
 }
 

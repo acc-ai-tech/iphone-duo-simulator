@@ -41,7 +41,7 @@ final class DarwinNotificationListener {
 
     /// `com.duolab.option.<name>.on|off`
     static let options: [String: WritableKeyPath<DuoOptions, Bool>] = [
-        "frame": \.showFrame, "hinge": \.showHinge, "3d": \.show3D, "blur": \.blurOnFold, "sizes": \.showSizes, "hud": \.hudVisible, "advanced": \.hudAdvanced,
+        "frame": \.showFrame, "hinge": \.showHinge, "3d": \.show3D, "blur": \.blurOnFold, "sidetoolbar": \.sideToolbar, "sizes": \.showSizes, "hud": \.hudVisible, "advanced": \.hudAdvanced,
     ]
 
     static func handle(_ name: String) {

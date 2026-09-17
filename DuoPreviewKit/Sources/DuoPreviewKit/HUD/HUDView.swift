@@ -196,6 +196,8 @@ struct HUDView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Spacer(minLength: 4)
+            optionToggle("Side toolbar", \.sideToolbar)
+                .accessibilityHint("Moves navigation bar buttons to the right edge in Open Landscape and Outer")
             if !model.status.isEmpty {
                 Text(model.status).font(.system(size: 13)).foregroundStyle(.orange).lineLimit(1).truncationMode(.middle)
             }

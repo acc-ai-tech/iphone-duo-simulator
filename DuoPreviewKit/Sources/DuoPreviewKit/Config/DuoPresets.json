@@ -5,6 +5,7 @@
   "bezelWidth": 10,
   "hingeWidth": 14,
   "displaySwitchAngle": 40,
+  "sideToolbarWidth": 61,
   "posture": { "closedBelow": 10, "openAbove": 160 },
   "angles": { "closed": 0, "halfOpen": 90, "open": 180, "keyboardStep": 15, "remoteStep": 5 },
   "animation": {
@@ -33,14 +34,16 @@
       "width": 466, "height": 678,
       "safeAreaInsets": { "top": 0, "left": 0, "bottom": 0, "right": 0 },
       "sizeClass": { "horizontal": "compact", "vertical": "regular" },
-      "hinge": "none"
+      "hinge": "none",
+      "sideToolbar": true
     },
     {
       "id": "inner.landscape", "title": "Open Landscape", "display": "inner", "orientation": "landscape", "split": "none",
       "width": 890, "height": 626,
       "safeAreaInsets": { "top": 0, "left": 0, "bottom": 0, "right": 0 },
       "sizeClass": { "horizontal": "regular", "vertical": "regular" },
-      "hinge": "vertical"
+      "hinge": "vertical",
+      "sideToolbar": true
     },
     {
       "id": "inner.portrait", "title": "Open Portrait", "display": "inner", "orientation": "portrait", "split": "none",

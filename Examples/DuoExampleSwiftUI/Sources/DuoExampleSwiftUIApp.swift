@@ -52,6 +52,14 @@ struct RootView: View {
     @State private var section: AppSection? = AppSection(rawValue: UserDefaults.standard.string(forKey: "screen") ?? "") ?? .library
     @State private var visibility: NavigationSplitViewVisibility = .automatic
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.duoPosture) private var posture
+    @Environment(\.duoHinge) private var hinge
+
+    /// Half-open with a vertical hinge: sidebar ends exactly at the hinge (50/50).
+    private var hingeSidebarWidth: CGFloat? {
+        guard posture == .halfOpen, !hinge.rect.isNull, hinge.rect.height > hinge.rect.width else { return nil }
+        return hinge.rect.minX
+    }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $visibility) {
@@ -61,6 +69,8 @@ struct RootView: View {
                 }
             }
             .navigationTitle("Duo SwiftUI")
+            .navigationSplitViewColumnWidth(min: hingeSidebarWidth ?? 180, ideal: hingeSidebarWidth ?? 320,
+                                            max: hingeSidebarWidth ?? 400)
         } detail: {
             NavigationStack {
                 switch section ?? .library {

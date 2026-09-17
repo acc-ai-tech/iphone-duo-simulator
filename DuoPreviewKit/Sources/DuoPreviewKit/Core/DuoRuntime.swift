@@ -21,6 +21,7 @@ struct DuoOptions: Codable, Equatable {
         showHinge = try c.decodeIfPresent(Bool.self, forKey: .showHinge) ?? d.showHinge
         show3D = try c.decodeIfPresent(Bool.self, forKey: .show3D) ?? d.show3D
         blurOnFold = try c.decodeIfPresent(Bool.self, forKey: .blurOnFold) ?? d.blurOnFold
+        sideToolbar = try c.decodeIfPresent(Bool.self, forKey: .sideToolbar) ?? d.sideToolbar
         showSizes = try c.decodeIfPresent(Bool.self, forKey: .showSizes) ?? d.showSizes
         hudVisible = try c.decodeIfPresent(Bool.self, forKey: .hudVisible) ?? d.hudVisible
         hudCollapsed = try c.decodeIfPresent(Bool.self, forKey: .hudCollapsed) ?? d.hudCollapsed
@@ -31,6 +32,7 @@ struct DuoOptions: Codable, Equatable {
     var showHinge = true
     var show3D = true
     var blurOnFold = true
+    var sideToolbar = true
     var showSizes = true
     var hudVisible = true
     var hudCollapsed = false

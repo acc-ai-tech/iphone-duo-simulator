@@ -57,6 +57,18 @@
 - **Панель**: простой вид и Advanced; высота панели пересчитывается через `preferredContentSize` хостинга SwiftUI
   (синхронный `sizeThatFits` сразу после смены состояния отдавал старую высоту).
 
+- **Side toolbar** (по запросу): для пресетов с `"sideToolbar": true` (outer, inner.landscape) в плоском положении
+  хост находит видимые `UINavigationController` контента, скрывает их navigation bar / toolbar и показывает кнопки
+  иконками в капсуле `UIGlassEffect` (iOS 26+, до — blur) справа; `additionalSafeAreaInsets.right += sideToolbarWidth`.
+  Нажатия: `UIAction.performWithSender`, `sendAction(target/action)`, `menu`, `UIControl.sendActions`; «назад» — `popViewController`;
+  для split view — кнопка показа/скрытия сайдбара; для `searchController` — кнопка, временно показывающая бар.
+  Сканирование каждые 0.3 с (без делегатов и swizzling), бары восстанавливаются при выходе из состояния.
+  **Ограничения**: `UIBarButtonItem(systemItem:)` без action не отличить от разделителя публичными API — такие кнопки
+  пропадают (в UIKit-примере «+» в Feed); у системных кнопок с action нет иконки — показывается буква/знак вопроса;
+  приложение, само управляющее видимостью navigation bar, будет конфликтовать со скрытием.
+- **50/50 в полураскрытом положении** — поведение примеров, не эмулятора: split view (UIKit) и NavigationSplitView
+  (SwiftUI) ставят ширину сайдбара = `hingeRect.minX` при `.halfOpen` и вертикальном шарнире.
+
 ## Исследования
 
 ### Перенос SwiftUI-корня в child (`.duoPreviewHost()`)

@@ -1,7 +1,5 @@
-import UIKit
-#if DEBUG
 import DuoPreviewKit
-#endif
+import UIKit
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -65,6 +63,25 @@ final class RootSplitViewController: UISplitViewController, UISplitViewControlle
         #if DEBUG
         DuoPreview.track(self)
         #endif
+        registerForTraitChanges([DuoPostureTrait.self, DuoHingeTrait.self]) { (self: Self, _: UITraitCollection) in
+            self.applyHingeColumns()
+        }
+        applyHingeColumns()
+    }
+
+    /// Half-open with a vertical hinge: sidebar and detail split 50/50 along the hinge.
+    private func applyHingeColumns() {
+        let hinge = traitCollection.duoHinge
+        if traitCollection.duoPosture == .halfOpen, !hinge.rect.isNull, hinge.rect.height > hinge.rect.width {
+            minimumPrimaryColumnWidth = hinge.rect.minX
+            maximumPrimaryColumnWidth = hinge.rect.minX
+            preferredPrimaryColumnWidth = hinge.rect.minX
+            preferredSplitBehavior = .tile
+        } else {
+            minimumPrimaryColumnWidth = UISplitViewController.automaticDimension
+            maximumPrimaryColumnWidth = UISplitViewController.automaticDimension
+            preferredPrimaryColumnWidth = UISplitViewController.automaticDimension
+        }
     }
 
     private func show(_ screen: Screen) {

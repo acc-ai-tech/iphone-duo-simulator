@@ -56,6 +56,10 @@ WindowGroup { RootView().duoPreviewHost() }
 **Панель** — сверху, над устройством (перетаскивается за заголовок, сворачивается в кнопку). Простой вид: пресеты,
 Fold, угол, 3D, анимация (3D fold / Live resize / Instant), Blur, Screenshots. **Advanced** добавляет stress test,
 свой размер, Frame/Hinge/Sizes, шаги Live resize. Показывается при каждом запуске; скрыть: ⌘⇧D или двойной тап тремя пальцами.
+**Side toolbar** (включён по умолчанию, кнопка на панели): в Open Landscape и Outer кнопки navigation bar и toolbar
+(назад, поиск, кнопки баров, переключатель сайдбара) переносятся в стеклянную капсулу у правого края, бары приложения
+скрываются, контент получает safe area справа (`sideToolbarWidth` в JSON, флаг `sideToolbar` у пресета).
+В полураскрытом положении бары приложения возвращаются.
 Если окно меньше экрана Duo (Stage Manager, ландшафт), устройство показывается уменьшенным — размеры контента в pt не меняются.
 
 | Клавиши | Действие |
@@ -76,7 +80,7 @@ N fold; N unfold
 N state.inner.portrait            # outer | inner.landscape | inner.portrait | inner.split.half | inner.split.stacked
 N angle.90                        # 0…180, шаг 5
 N anim.continuous                 # realistic | continuous | none
-N option.3d.on                    # frame | hinge | 3d | blur | sizes | hud | advanced  × on | off
+N option.3d.on                    # frame | hinge | 3d | blur | sidetoolbar | sizes | hud | advanced  × on | off
 N report                          # → Library/Caches/duolab-report.json
 cat "$(xcrun simctl get_app_container booted <bundle-id> data)/Library/Caches/duolab-report.json"
 ```
