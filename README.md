@@ -26,19 +26,14 @@ Everything is controlled from an in-app panel, the keyboard, or the terminal.
 ## Requirements
 
 - iOS 17+, Swift 6
-- **Your app target must support iPad.** Run it on an **iPad simulator**, ideally iPad Pro 13".
-- **Run the app full screen.** Smaller windows (Stage Manager, Split View) still work, but the device is scaled down.
+- Best on an **iPad simulator** (ideally iPad Pro 13") with your app target supporting iPad and running full screen.
+- Also runs on an **iPhone simulator** and in small iPad windows: the device is scaled down (content keeps its exact
+  point sizes) and the panel switches to a compact layout with presets, fold and 0°/90°/180°.
 
-### Your app must run as an iPad app
+### iPhone-only apps on an iPad
 
-The emulator needs an iPad-sized window. An iPhone-only app launched on an iPad runs in iPhone compatibility mode, in a
-390×844 window, and the emulator stays off. The console then says:
-
-```
-[DuoPreview] ⚠️ not enabled: window 390×844 is too small for Duo screens …
-```
-
-To fix it, add iPad to your target's supported destinations. If you ship an iPhone-only app, do it for the Debug
+An iPhone-only app launched on an iPad runs in iPhone compatibility mode, in a 390×844 window, so the device is shown
+at less than half size. To use the full iPad screen, add iPad to your target's supported destinations. If you ship an iPhone-only app, do it for the Debug
 configuration only:
 
 - In Xcode: **Target → General → Supported Destinations → add iPad**, or

@@ -16,6 +16,8 @@ final class HUDModel {
     var stressCycles: Int
     var status = ""
     var isBusy = false
+    /// Narrow window (iPhone): only presets, fold and the 0/90/180 buttons.
+    var compact = false
     /// Observable mirror of the runtime options (runtime itself is not observable).
     var options: DuoOptions {
         didSet {
@@ -132,6 +134,51 @@ struct HUDView: View {
     private var advanced: Bool { model.options.hudAdvanced }
 
     var body: some View {
+        if model.compact {
+            compactBody
+        } else {
+            fullBody
+        }
+    }
+
+    private var compactBody: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
+                Text("Duo Preview").font(.system(size: 15, weight: .semibold))
+                Text("\(Int(model.layout.contentFrame.width))×\(Int(model.layout.contentFrame.height)) · \(Int(model.state.hingeAngle))°")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                Button {
+                    model.collapsed = true
+                } label: {
+                    Image(systemName: "minus.circle.fill").font(.system(size: 22))
+                }
+                .accessibilityLabel("Collapse")
+            }
+            .frame(height: 40)
+            ScrollView(.horizontal, showsIndicators: false) {
+                presets
+            }
+            HStack(spacing: 8) {
+                foldButton
+                angleButton("0", model.config.angles.closed)
+                angleButton("90", model.config.angles.halfOpen)
+                angleButton("180", model.config.angles.open)
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 10)
+        .controlSize(.regular)
+        .background(.regularMaterial)
+        .environment(\.colorScheme, .dark)
+        .font(.system(size: 14))
+    }
+
+    private var fullBody: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
             HStack(spacing: 12) {

@@ -74,6 +74,11 @@ final class HUDRootViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         guard view.bounds.width > 0 else { return }
+        let compact = view.bounds.width < 760
+        if model.compact != compact {
+            model.compact = compact
+            didPlacePanel = false
+        }
         if !didPlacePanel {
             didPlacePanel = true
             updateCollapsed(animated: false)
@@ -100,7 +105,7 @@ final class HUDRootViewController: UIViewController {
         if collapsed {
             frame = CGRect(x: bounds.maxX - collapsedSize.width - 16, y: top, width: collapsedSize.width, height: collapsedSize.height)
         } else {
-            let width = min(bounds.width - 16, maxExpandedWidth)
+            let width = model.compact ? bounds.width - 16 : min(bounds.width - 16, maxExpandedWidth)
             let height = ceil(hosting.sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude)).height)
             frame = CGRect(x: ((bounds.width - width) / 2).rounded(), y: top, width: width, height: height)
         }
@@ -163,7 +168,7 @@ final class HUDRootViewController: UIViewController {
 extension HUDRootViewController: UIGestureRecognizerDelegate {
     /// Drag only from the header strip (or anywhere when collapsed) so sliders keep working.
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        model.collapsed || gestureRecognizer.location(in: panel).y < 56
+        model.collapsed || gestureRecognizer.location(in: panel).y < (model.compact ? 44 : 56)
     }
 }
 

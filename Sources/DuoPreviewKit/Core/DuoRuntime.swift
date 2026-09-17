@@ -91,13 +91,12 @@ final class DuoRuntime {
         }
         let bezel = config.bezelWidth * 2
         let available = window.bounds.size
-        let minimumScale = 0.5
-        // The device is scaled down to fit smaller windows; below 50% it is not useful anymore.
-        guard UIDevice.current.userInterfaceIdiom == .pad,
-              available.width >= (needed.width + bezel) * minimumScale,
+        // The device is scaled down to fit smaller windows (iPhone, Stage Manager); below 30% it is not useful anymore.
+        let minimumScale = 0.3
+        guard available.width >= (needed.width + bezel) * minimumScale,
               available.height >= (needed.height + bezel) * minimumScale else {
             duoPrint("⚠️ not enabled: window \(Int(available.width))×\(Int(available.height)) is too small for Duo screens "
-                + "\(Int(needed.width + bezel))×\(Int(needed.height + bezel)) even at 50%. Use an iPad in full screen.")
+                + "\(Int(needed.width + bezel))×\(Int(needed.height + bezel)) even at 30%. Use a larger window.")
             return
         }
         if available.width < needed.width + bezel || available.height < needed.height + bezel {
