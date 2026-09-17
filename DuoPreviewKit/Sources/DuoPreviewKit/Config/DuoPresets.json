@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "scale": 3,
+  "cornerRadius": 28,
+  "bezelWidth": 10,
+  "hingeWidth": 14,
+  "displaySwitchAngle": 40,
+  "posture": { "closedBelow": 10, "openAbove": 160 },
+  "angles": { "closed": 0, "halfOpen": 90, "open": 180, "keyboardStep": 15, "remoteStep": 5 },
+  "animation": {
+    "duration": 0.5,
+    "minimumDurationFraction": 0.3,
+    "continuousSteps": 6,
+    "continuousStepPause": 0.35,
+    "perspective": 1400,
+    "shadeOpacity": 0.55,
+    "halfOpen3DFPS": 15,
+    "blurRadius": 18,
+    "blurRampFraction": 0.3,
+    "blurFadeOut": 0.3
+  },
+  "tools": {
+    "settleDelay": 0.25,
+    "screenshotStates": ["outer", "inner.landscape", "inner.portrait", "inner.split.half", "inner.split.stacked", "inner.landscape@90", "inner.portrait@90"],
+    "stressSequence": ["inner.landscape", "outer", "inner.portrait", "inner.landscape@90"],
+    "stressCycles": 5,
+    "stressDelay": 0.3,
+    "diffChannelThreshold": 24
+  },
+  "presets": [
+    {
+      "id": "outer", "title": "Outer", "display": "outer",
+      "width": 466, "height": 678,
+      "safeAreaInsets": { "top": 0, "left": 0, "bottom": 0, "right": 0 },
+      "sizeClass": { "horizontal": "compact", "vertical": "regular" },
+      "hinge": "none"
+    },
+    {
+      "id": "inner.landscape", "title": "Open Landscape", "display": "inner", "orientation": "landscape", "split": "none",
+      "width": 890, "height": 626,
+      "safeAreaInsets": { "top": 0, "left": 0, "bottom": 0, "right": 0 },
+      "sizeClass": { "horizontal": "regular", "vertical": "regular" },
+      "hinge": "vertical"
+    },
+    {
+      "id": "inner.portrait", "title": "Open Portrait", "display": "inner", "orientation": "portrait", "split": "none",
+      "width": 626, "height": 890,
+      "safeAreaInsets": { "top": 0, "left": 0, "bottom": 0, "right": 0 },
+      "sizeClass": { "horizontal": "regular", "vertical": "regular" },
+      "hinge": "horizontal"
+    },
+    {
+      "id": "inner.split.half", "title": "Half Side", "display": "inner", "orientation": "landscape", "split": "half",
+      "width": 445, "height": 626,
+      "screen": "inner.landscape", "originX": 0, "originY": 0,
+      "safeAreaInsets": { "top": 0, "left": 0, "bottom": 0, "right": 0 },
+      "sizeClass": { "horizontal": "compact", "vertical": "regular" },
+      "hinge": "none"
+    },
+    {
+      "id": "inner.split.stacked", "title": "Half Top", "display": "inner", "orientation": "portrait", "split": "stacked",
+      "width": 626, "height": 445,
+      "screen": "inner.portrait", "originX": 0, "originY": 0,
+      "safeAreaInsets": { "top": 0, "left": 0, "bottom": 0, "right": 0 },
+      "sizeClass": { "horizontal": "compact", "vertical": "regular" },
+      "hinge": "none"
+    }
+  ]
+}
