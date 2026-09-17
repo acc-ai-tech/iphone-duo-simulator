@@ -8,7 +8,7 @@ Verified with Xcode 27.0, Swift 6.4 and the iOS 27.0 simulator on an **iPad Pro 
 |---|---|
 | Core model, presets, host controller | 33 unit tests; UIKit example checked in every preset |
 | Traits and SwiftUI environment | SwiftUI example: environment values, size classes, `NavigationSplitView` collapsing |
-| Animations | Frame-by-frame screenshots of 3D fold and live resize, using slowed-down presets |
+| Animations | Frame-by-frame screenshots of the 3D fold, using slowed-down presets |
 | Debug panel and keyboard | Panel checked visually. Key commands are registered, but key presses weren't automated |
 | Half-open posture | 3D view in portrait and landscape, `hingeRect` in UIKit and SwiftUI |
 | Tools | Screenshots and stress test covered by unit tests; terminal commands and the report tested in the simulator |
@@ -32,8 +32,8 @@ current angle, so you can rotate a half-open device. From the outer screen, inne
 **State tokens.** Screenshot and stress test sequences use `presetId[@angle]`, for example `inner.portrait@90`.
 
 **`DuoPreview.state` is the target state.** It is committed when a transition starts, so observers and the panel see the
-destination immediately. During live resize, posture and hinge traits only change when a posture threshold is crossed.
-Angle changes without animation (the slider, `setHingeAngle(_:animated: false)`) update traits on every change.
+destination immediately. Angle changes without animation (the slider, `setHingeAngle(_:animated: false)`) update traits
+on every change.
 
 **Requests queue up.** A request made during a transition waits for it to finish. The latest request wins, and every
 completion handler still runs.
@@ -153,28 +153,11 @@ disables interaction while it's shown. This conclusion comes from analysis; no r
 - Action sheets, popovers, activity views and system sheets are also positioned against the iPad window.
 - The status bar and home indicator belong to the iPad. Emulated safe areas come from `safeAreaInsets` in the JSON.
 - Darwin notifications sent in the first half second or so after launch, before the host is installed, are lost.
-- Live resize exposes real UIKit artifacts at intermediate sizes, such as a large title overlapping the first list row.
-  That's the point of the mode.
 - During a 3D fold the content is covered by the overlay, and `DuoPreview.state` already reports the destination.
 
-## Live resize performance
-
-Every live resize logs `continuous: N frames in T s (X fps)`. Measured over three fold/unfold cycles on a Debug build
-(`-Onone`) in the iPad Pro 13" simulator. Another Xcode build was running on the Mac at the same time, so the numbers
-are noisy.
-
-| Example screen | fps |
-|---|---|
-| Posture Debug (split view and a label) | 23–53 |
-| Feed (split view, 120-cell compositional grid, search) | 11–48 |
-| Article (split view, about 35 multi-line labels in a stack view) | 10–21 |
-
-**60 fps for simple content is not confirmed.** Most of the cost is re-laying out the content every frame
-(`UISplitViewController` plus Auto Layout at each new size), which is inherent to a live resize. The hinge trait now only
-changes on posture or hinge rect changes instead of every frame, since each trait change re-evaluates the whole hierarchy,
-but the noisy measurements showed no clear gain. Next steps: measure a Release build on an idle machine with an empty view
-controller as content, and profile with Instruments. Stepped live resize (`continuous(steps:)`) doesn't depend on frame
-rate.
+**Live resize.** A mode that resized live content every frame (`DuoAnimation.continuous`) existed and was removed on
+request; only the 3D fold and the instant switch are left. Its measured performance (10–50 fps in a Debug build) no
+longer applies.
 
 ## Open questions
 

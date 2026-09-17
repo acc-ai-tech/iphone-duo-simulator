@@ -105,9 +105,9 @@ final class HostTests: XCTestCase {
         XCTAssertTrue(spy.traitCollection.duoHinge.rect.isNull)
     }
 
-    func testContinuousAnimationEndsAtTargetSize() async throws {
+    func testInstantAnimationEndsAtTargetSize() async throws {
         try await apply("inner.landscape")
-        await DuoPreview.transition(to: DuoState.preset("outer")!, animation: .continuous(steps: 3, duration: 0.1))
+        await DuoPreview.transition(to: DuoState.preset("outer")!, animation: DuoAnimation(kind: .none))
         window.layoutIfNeeded()
         XCTAssertEqual(navigation.view.bounds.size, CGSize(width: 466, height: 678))
         XCTAssertEqual(spy.transitions.last, CGSize(width: 466, height: 678))
@@ -143,7 +143,7 @@ final class HostTests: XCTestCase {
 
     func testQueuedRequestsApplyLatest() async throws {
         try await apply("inner.landscape")
-        DuoPreview.set(DuoState.preset("outer")!, animation: .continuous(steps: 2, duration: 0.05))
+        DuoPreview.set(DuoState.preset("outer")!, animation: .realistic(duration: 0.05))
         DuoPreview.set(DuoState.preset("inner.portrait")!, animation: .none)
         await DuoPreview.transition(to: DuoState.preset("inner.split.half")!, animation: .none)
         window.layoutIfNeeded()

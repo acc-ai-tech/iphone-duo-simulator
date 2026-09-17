@@ -258,17 +258,12 @@ final class DuoHostViewController: UIViewController {
 
     /// Applies size classes and Duo traits to the content.
     ///
-    /// With `throttleHinge` (used every frame of `.continuous`) the hinge trait is only updated when the posture or
-    /// hinge rect changes: a trait change re-evaluates traits of the whole content hierarchy and costs frames.
-    func applyTraits(layout: DuoLayout, angle: Double, throttleHinge: Bool = false) {
+    func applyTraits(layout: DuoLayout, angle: Double) {
         var angleState = displayedState
         angleState.hingeAngle = angle
         let posture = angleState.posture(in: config)
         let hingeRect = angle >= config.displaySwitchAngle ? layout.hingeRect : .null
-        var hinge = DuoHinge(angle: angle, rect: hingeRect)
-        if throttleHinge, let last = lastTraits, last.1 == posture, last.2.rect == hingeRect || (last.2.rect.isNull && hingeRect.isNull) {
-            hinge = last.2
-        }
+        let hinge = DuoHinge(angle: angle, rect: hingeRect)
         if let last = lastTraits, last.0 == layout.sizeClass, last.1 == posture, last.2 == hinge { return }
         lastTraits = (layout.sizeClass, posture, hinge)
 
@@ -332,8 +327,6 @@ final class DuoHostViewController: UIViewController {
         switch animation.kind {
         case .none:
             performTransition(to: new, duration: 0, completion: finish)
-        case .continuous:
-            ContinuousAnimator(host: self, from: from, to: new, animation: animation).start(completion: finish)
         case .realistic:
             RealisticAnimator(host: self, from: from, to: new, animation: animation).start(completion: finish)
         }

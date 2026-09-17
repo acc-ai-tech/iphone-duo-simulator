@@ -14,7 +14,7 @@ Everything is controlled from an in-app panel, the keyboard, or the terminal.
 ## Features
 
 - **Screen presets**: outer screen, inner screen in landscape and portrait, and half-screen split layouts
-- **Fold animations**: a 3D fold with optional blur, a live resize for catching layout bugs, or an instant switch
+- **Fold animation**: a 3D fold with optional blur, or an instant switch
 - **Half-open posture**: hinge angle and hinge rect, with an optional 3D view of the device
 - **UIKit traits and SwiftUI environment values** for posture and hinge, ready to swap for Apple's API later
 - **Side toolbar**: moves navigation bar buttons to the right edge on the outer and open landscape screens
@@ -157,7 +157,7 @@ duo fold
 duo unfold
 duo state.inner.portrait     # outer, inner.landscape, inner.portrait, inner.split.half, inner.split.stacked
 duo angle.90                 # 0–180 in steps of 5
-duo anim.continuous          # realistic, continuous, none
+duo anim.realistic           # realistic, none
 duo option.3d.on             # frame, hinge, 3d, blur, sidetoolbar, safearealine, sizes, hud, advanced + .on / .off
 duo report                   # writes Library/Caches/duolab-report.json in the app container
 duo screenshots              # writes Documents/DuoPreview/<timestamp>/ in the app container

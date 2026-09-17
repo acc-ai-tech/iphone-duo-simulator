@@ -6,8 +6,6 @@ public struct DuoAnimation: Sendable, Equatable, Codable {
     public enum Kind: String, Sendable, Equatable, Codable, CaseIterable {
         /// Snapshot leaves rotated in 3D, content switched at `displaySwitchAngle`.
         case realistic
-        /// Live content resized every frame (or in discrete steps).
-        case continuous
         /// Instant change.
         case none
     }
@@ -15,29 +13,18 @@ public struct DuoAnimation: Sendable, Equatable, Codable {
     public var kind: Kind
     /// Duration of a full 0↔180° fold. `nil` uses `animation.duration` from JSON.
     public var duration: TimeInterval?
-    /// For `.continuous` only: number of discrete steps with a pause between them. `nil` means every frame.
-    public var steps: Int?
-
-    public init(kind: Kind, duration: TimeInterval? = nil, steps: Int? = nil) {
+    public init(kind: Kind, duration: TimeInterval? = nil) {
         self.kind = kind
         self.duration = duration
-        self.steps = steps
     }
 
     /// Snapshot leaves in 3D, like on the device.
     public static let realistic = DuoAnimation(kind: .realistic)
-    /// Live resize every frame.
-    public static let continuous = DuoAnimation(kind: .continuous)
     /// Instant change.
     public static let none = DuoAnimation(kind: .none)
 
     public static func realistic(duration: TimeInterval) -> DuoAnimation {
         DuoAnimation(kind: .realistic, duration: duration)
-    }
-
-    /// Live resize; with `steps` the size changes in N discrete steps with a pause (`animation.continuousStepPause`).
-    public static func continuous(steps: Int?, duration: TimeInterval? = nil) -> DuoAnimation {
-        DuoAnimation(kind: .continuous, duration: duration, steps: steps)
     }
 }
 

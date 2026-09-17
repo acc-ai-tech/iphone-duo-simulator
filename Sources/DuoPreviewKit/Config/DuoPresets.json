@@ -11,8 +11,6 @@
   "animation": {
     "duration": 0.5,
     "minimumDurationFraction": 0.3,
-    "continuousSteps": 6,
-    "continuousStepPause": 0.35,
     "perspective": 1400,
     "shadeOpacity": 0.55,
     "halfOpen3DFPS": 15,

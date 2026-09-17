@@ -9,7 +9,6 @@ final class HUDModel {
 
     private(set) var state: DuoState
     private(set) var animationKind: DuoAnimation.Kind
-    var continuousSteps: Int
     var sliderAngle: Double
     var customWidth = ""
     var customHeight = ""
@@ -36,7 +35,6 @@ final class HUDModel {
         self.runtime = runtime
         state = runtime.state
         animationKind = runtime.animation.kind
-        continuousSteps = runtime.animation.steps ?? 0
         sliderAngle = runtime.state.hingeAngle
         stressCycles = runtime.config.tools.stressCycles
         collapsed = runtime.options.hudCollapsed
@@ -59,16 +57,11 @@ final class HUDModel {
     // MARK: Actions
 
     var animation: DuoAnimation {
-        DuoAnimation(kind: animationKind, steps: animationKind == .continuous && continuousSteps > 0 ? continuousSteps : nil)
+        DuoAnimation(kind: animationKind)
     }
 
     func setAnimationKind(_ kind: DuoAnimation.Kind) {
         animationKind = kind
-        runtime.animation = animation
-    }
-
-    func setSteps(_ steps: Int) {
-        continuousSteps = steps
         runtime.animation = animation
     }
 
@@ -204,10 +197,6 @@ struct HUDView: View {
                     optionToggle("Right toolbar", \.sideToolbar)
                         .accessibilityHint("Moves navigation bar buttons to the right edge in Open Landscape and Outer")
                     optionToggle("Line", \.safeAreaLine)
-                    if model.animationKind == .continuous {
-                        divider
-                        stepsStepper
-                    }
                     Spacer(minLength: 0)
                 }
             }
@@ -326,8 +315,8 @@ struct HUDView: View {
     private var animation: some View {
         HStack(spacing: 6) {
             Text("Animation").foregroundStyle(.secondary).fixedSize()
-            // realistic: snapshot leaves fold in 3D; continuous: live content resized every frame; none: instant.
-            ForEach([(DuoAnimation.Kind.realistic, "3D fold"), (.continuous, "Live resize"), (.none, "Instant")], id: \.0) { kind, title in
+            // realistic: snapshot leaves fold in 3D; none: instant.
+            ForEach([(DuoAnimation.Kind.realistic, "3D fold"), (.none, "Instant")], id: \.0) { kind, title in
                 Button(title) { model.setAnimationKind(kind) }
                     .buttonStyle(.bordered)
                     .tint(model.animationKind == kind ? .indigo : .gray)
@@ -338,19 +327,11 @@ struct HUDView: View {
         }
     }
 
-    private var stepsStepper: some View {
-        Stepper(value: Binding(get: { model.continuousSteps }, set: { model.setSteps($0) }), in: 0...20) {
-            Text(model.continuousSteps == 0 ? "Live resize steps: ∞" : "Live resize steps: \(model.continuousSteps)")
-                .monospacedDigit().fixedSize()
-        }
-        .fixedSize()
-    }
-
     private var angle: some View {
         HStack(spacing: 10) {
             Text("Angle").foregroundStyle(.secondary).fixedSize()
             Slider(value: $model.sliderAngle, in: 0...180, step: 1) { _ in }
-                .frame(minWidth: 120)
+                .frame(width: 200)
                 .onChange(of: model.sliderAngle) { _, value in
                     if Int(value) != Int(model.state.hingeAngle) { model.setAngle(value, animated: false) }
                 }

@@ -99,8 +99,6 @@ public struct DuoConfiguration: Codable, Sendable, Equatable {
     public struct Animation: Codable, Sendable, Equatable {
         public var duration: Double
         public var minimumDurationFraction: Double
-        public var continuousSteps: Int
-        public var continuousStepPause: Double
         public var perspective: Double
         public var shadeOpacity: Double
         public var halfOpen3DFPS: Double

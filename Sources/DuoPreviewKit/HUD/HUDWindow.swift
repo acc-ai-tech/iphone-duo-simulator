@@ -101,18 +101,35 @@ final class HUDRootViewController: UIViewController {
         let collapsed = model.collapsed
         let bounds = view.bounds
         let top = view.safeAreaInsets.top + 6
-        let frame: CGRect
+        let available = max(bounds.width - 16, 1)
+        let size: CGSize
+        let scale: CGFloat
         if collapsed {
-            frame = CGRect(x: bounds.maxX - collapsedSize.width - 16, y: top, width: collapsedSize.width, height: collapsedSize.height)
+            size = collapsedSize
+            scale = 1
+        } else if model.compact {
+            let height = ceil(hosting.sizeThatFits(in: CGSize(width: available, height: .greatestFiniteMagnitude)).height)
+            size = CGSize(width: available, height: height)
+            scale = 1
         } else {
-            let width = model.compact ? bounds.width - 16 : min(bounds.width - 16, maxExpandedWidth)
+            // Lay the panel out at the width its content wants, then scale it down if the window is narrower.
+            let unbounded = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            let ideal = ceil(hosting.sizeThatFits(in: unbounded).width)
+            let width = min(max(ideal, 320), maxExpandedWidth)
             let height = ceil(hosting.sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude)).height)
-            frame = CGRect(x: ((bounds.width - width) / 2).rounded(), y: top, width: width, height: height)
+            size = CGSize(width: width, height: height)
+            scale = min(1, available / width)
         }
+        let scaledWidth = size.width * scale
+        let originX = collapsed ? bounds.maxX - scaledWidth - 16 : ((bounds.width - scaledWidth) / 2).rounded()
+        let center = CGPoint(x: originX + scaledWidth / 2, y: top + size.height * scale / 2)
         let changes = {
-            self.panel.frame = frame
+            self.panel.transform = .identity
+            self.panel.bounds = CGRect(origin: .zero, size: size)
             self.hosting.view.frame = self.panel.bounds
             self.collapsedButton.frame = self.panel.bounds
+            self.panel.transform = CGAffineTransform(scaleX: scale, y: scale)
+            self.panel.center = center
             self.hosting.view.alpha = collapsed ? 0 : 1
             self.collapsedButton.alpha = collapsed ? 1 : 0
             self.clampPanel()
@@ -126,10 +143,11 @@ final class HUDRootViewController: UIViewController {
 
     private func clampPanel() {
         guard view.bounds.width > 0 else { return }
-        var frame = panel.frame
-        frame.origin.x = min(max(frame.origin.x, 8), view.bounds.width - frame.width - 8)
-        frame.origin.y = min(max(frame.origin.y, view.safeAreaInsets.top + 4), view.bounds.height - frame.height - 8)
-        panel.frame = frame
+        // The panel may be scaled, so it is moved through its center.
+        let frame = panel.frame
+        let x = min(max(frame.origin.x, 8), max(view.bounds.width - frame.width - 8, 8))
+        let y = min(max(frame.origin.y, view.safeAreaInsets.top + 4), max(view.bounds.height - frame.height - 8, 0))
+        panel.center = CGPoint(x: panel.center.x + x - frame.origin.x, y: panel.center.y + y - frame.origin.y)
         updateReservedInset()
     }
 
