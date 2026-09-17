@@ -1,162 +1,186 @@
-# NOTES — DuoPreviewKit
+# Design notes
 
-Окружение проверки: Xcode 27.0, Swift 6.4, iOS 27.0 simulator, **iPad Pro 13-inch (M5)** (1032×1376 pt), 2026-09-17.
+Verified with Xcode 27.0, Swift 6.4 and the iOS 27.0 simulator on an **iPad Pro 13-inch (M5)** (1032×1376 pt).
 
-## Статус этапов
+## Status
 
-| Этап | Статус | Проверено |
-|---|---|---|
-| M1 ядро | готово | 32 юнит-теста; UIKit-пример в симуляторе во всех пресетах |
-| M2 SwiftUI + трейты | готово | SwiftUI-пример: environment, size class, NavigationSplitView collapse |
-| M3 анимации | готово | покадровые скриншоты realistic и continuous (замедленный JSON через `-duoPresets`) |
-| M4 HUD и клавиатура | готово | HUD визуально; key commands собраны, **нажатия в симуляторе не проверены** (нет автоматизации клавиатуры) |
-| M5 полусложенное положение | готово | 3D-вид в портрете и ландшафте, плашка «preview only», `hingeRect` в UIKit и SwiftUI |
-| M6 инструменты | готово | скриншоты всех состояний и stress test (юнит-тесты), `notifyutil` из терминала, report JSON |
-
-Сборка пакета и обоих примеров: 0 warnings (кроме системного `appintentsmetadataprocessor`, к коду не относится).
-
-## Решения
-
-- **Все размеры, пороги, тайминги только из `DuoPresets.json`.** В коде нет чисел для размеров экрана, углов и порогов.
-  Цвета и отступы HUD/рамки — визуальные константы, не часть модели.
-- **Split-пресеты** (`inner.split.half`, `inner.split.stacked`) ссылаются на физический экран (`"screen": "inner.landscape"`).
-  Рамка устройства рисуется по полному внутреннему экрану, вторая половина — плейсхолдер «другое приложение».
-  Шарнир лежит ровно на границе контента, поэтому `hingeRect == .null` (правило: шарнир принадлежит контенту,
-  только если его осевая линия строго внутри контента).
-- **Выбор пресета через ⌘N / `state.<id>`**: внутренние пресеты сохраняют текущий угол, если внутренний экран уже активен
-  (можно переключать ориентацию в halfOpen); из outer — угол `angles.open`. `outer` — угол `angles.closed`.
-- **Токены состояний** для JSON-списков скриншотов и stress test: `presetId[@angle]`, например `inner.portrait@90`.
-- **`DuoPreview.state` — целевое состояние.** Коммитится в начале перехода; наблюдатели и HUD видят цель сразу.
-  Во время `.continuous` трейты posture/hinge меняются при пересечении порогов posture, в конце выставляется целевой угол.
-  При изменении угла без анимации (слайдер HUD, `setHingeAngle(_:animated: false)`) трейты обновляются на каждое изменение.
-- **Release**: проверено в рантайме — Release-сборка примера с `-DuoPreview` работает на весь iPad, без HUD, логов
-  и реакции на `notifyutil`.
-- **Параллельные запросы**: пока идёт переход, новый запрос ставится в очередь; побеждает последний, completion'ы всех вызываются.
-- **API async-варианта** называется `DuoPreview.transition(to:animation:) async`, а не перегрузка `set`
-  (sync/async перегрузки с одинаковой сигнатурой делают вызов без `await` в async-контексте неоднозначным).
-- **Transition coordinator**: собственный `DuoTransitionCoordinator` (протокол `UIViewControllerTransitionCoordinator`).
-  Alongside-блоки выполняются внутри `UIView.animate` эмулятора, completion — по окончании.
-  Хост **не** вызывает `super.viewWillTransition` при повороте iPad — размер контента от окна не зависит.
-- **Снимки для створок**: `drawHierarchy(in:afterScreenUpdates:)` в `UIImage` + `CALayer.contentsRect` для половин,
-  вместо `resizableSnapshotView`. Так один и тот же код работает для анимации и для 3D-вида с обновлением по таймеру.
-  Снимается тело устройства (рамка + экран + линия шарнира), поэтому створки выглядят как устройство.
-- **Геометрия `.realistic`**: створки поворачиваются симметрично на `(180−angle)/2` каждая (V-образно к зрителю).
-  На внешнем экране одна створка поворачивается на `angle/displaySwitchAngle × rotation(displaySwitchAngle)`,
-  так что на пороге углы совпадают и переключение выглядит непрерывно.
-- **Смена ориентации/split без пересечения порога** в `.realistic` — обычный анимированный UIKit-переход (без створок).
-- **Внешнее управление расширено** командами `com.duolab.option.<frame|hinge|3d|sizes|hud>.<on|off>`:
-  без них из терминала нельзя проверить 3D-вид (cfprefsd кэширует UserDefaults, запись plist снаружи не работает).
-- **LifecycleTracker** без swizzling: `DuoPreview.track(self)` считает загрузки, `deinit` ловится через associated object.
-
-- **Включение (изменено по запросу)**: в DEBUG эмулятор включён по умолчанию, `-DuoPreview` больше не нужен;
-  выключение — `-DuoPreviewOff` / `DUO_PREVIEW=0`. Отклонение от исходной спецификации (там требовался аргумент).
-- **Маленькое окно** (Stage Manager, ландшафт iPad): вместо отключения устройство масштабируется `transform`'ом
-  (минимум 50%), контент сохраняет точные размеры в pt и трейты. Панель сверху резервирует место, устройство центрируется ниже.
-- **Blur в 3D fold**: размытые копии снимков (`CIGaussianBlur`) cross-fade поверх створок; в конце размытый снимок
-  нового состояния растворяется в живой контент. Параметры: `blurRadius`, `blurRampFraction`, `blurFadeOut`.
-- **Панель**: простой вид и Advanced; высота панели пересчитывается через `preferredContentSize` хостинга SwiftUI
-  (синхронный `sizeThatFits` сразу после смены состояния отдавал старую высоту).
-
-- **Side toolbar** (по запросу): для пресетов с `"sideToolbar": true` (outer, inner.landscape) в плоском положении
-  хост находит видимые `UINavigationController` контента, скрывает их navigation bar / toolbar и показывает кнопки
-  иконками в капсуле `UIGlassEffect` (iOS 26+, до — blur) справа; `additionalSafeAreaInsets.right += sideToolbarWidth`.
-  Нажатия: `UIAction.performWithSender`, `sendAction(target/action)`, `menu`, `UIControl.sendActions`; «назад» — `popViewController`;
-  для split view — кнопка показа/скрытия сайдбара; для `searchController` — кнопка, временно показывающая бар.
-  Сканирование каждые 0.3 с (без делегатов и swizzling), бары восстанавливаются при выходе из состояния.
-  **Ограничения**: `UIBarButtonItem(systemItem:)` без action не отличить от разделителя публичными API — такие кнопки
-  пропадают (в UIKit-примере «+» в Feed); у системных кнопок с action нет иконки — показывается буква/знак вопроса;
-  приложение, само управляющее видимостью navigation bar, будет конфликтовать со скрытием.
-- **50/50 в полураскрытом положении** — поведение примеров, не эмулятора: split view (UIKit) и NavigationSplitView
-  (SwiftUI) ставят ширину сайдбара = `hingeRect.minX` при `.halfOpen` и вертикальном шарнире.
-
-## Исследования
-
-### Перенос SwiftUI-корня в child (`.duoPreviewHost()`)
-**Работает, выбран основной вариант.** `UIHostingController` из `WindowGroup` становится child хоста.
-Проверено в `DuoExampleSwiftUI`: NavigationSplitView, `.searchable`, `.sheet`, `@State`, environment из трейтов
-(`UITraitBridgedEnvironmentKey`), `horizontalSizeClass` меняется при fold/unfold, состояние не сбрасывается.
-
-Побочный эффект, найденный и исправленный: установка через один `DispatchQueue.main.async` давала
-«Unbalanced calls to begin/end appearance transitions» у `UIHostingController`. Двойной `async` (после завершения
-появления корня) убирает предупреждение. Первый кадр приложения при этом рисуется в полный размер iPad.
-Для UIKit то же предупреждение возникало при `install` после `makeKeyAndVisible`; рекомендуемый порядок —
-`install` **до** `makeKeyAndVisible` (так в примере).
-
-Fallback `DuoPreviewHostView { content }` реализован (frame, size class, safe area, Duo environment), но без рамки,
-HUD-хоста и `viewWillTransition`; оставлен на случай, если перенос корня сломается в будущих версиях SwiftUI.
-
-**Координаты `hingeRect` в SwiftUI**: `.global` в `UIHostingController` не совпадает с координатами контента.
-Нужно объявить `.coordinateSpace(.named(...))` на корневом view и конвертировать через него (так в примере).
-
-### Живой контент на двух 3D-створках публичными API
-**Не получилось, используются снимки.** Анализ:
-- Один `CALayer` рендерится в дереве ровно один раз; показать живой слой в двух местах с разными трансформами
-  можно только через `CAReplicatorLayer`.
-- `CAReplicatorLayer` применяет **накопительный** `instanceTransform` (инстанс 0 всегда без трансформа)
-  и **одну** маску на весь репликатор; маскировать половину для каждого инстанса отдельно нельзя.
-  Вложенные репликаторы требуют, чтобы живой view был sublayer'ом двух разных родителей — невозможно.
-- `_UIPortalView` / `CAPortalLayer` дали бы решение, но это приватные API.
-
-Итог: 3D-вид = снимки `drawHierarchy(afterScreenUpdates: false)` по таймеру `halfOpen3DFPS` (15 fps), взаимодействие
-выключено, плашка «3D preview only». Анализ теоретический: прототип на `CAReplicatorLayer` не собирался.
-
-## Найденные баги (исправлены)
-
-- `ImageDiff`: общий `CIContext` возвращал нулевую разницу при последовательных сравнениях CGImage из
-  `UIGraphicsImageRenderer` (первое сравнение `a` vs `a`, затем `a` vs `b` → 0 пикселей). Отдельный скрипт на macOS
-  и изолированный тест в симуляторе считали верно. Исправлено: новый `CIContext(options: [.cacheIntermediates: false])`
-  на каждое сравнение; подсчёт через `CGContext` RGBA8 (известный порядок строк).
-- HUD при первом показе оказывался слева поверх устройства (позиция считалась до получения bounds).
-- Плашка «preview only» перекрывалась оверлеем створок.
-
-## Известные ограничения
-
-- **Модальные окна** (проверено скриншотами, `DuoExampleUIKit -screen modals -present <style>`, inner.landscape):
-  - `.overCurrentContext` / `.currentContext` при `definesPresentationContext = true` на презентующем VC —
-    **внутри** области Duo (в примере покрывают detail-колонку).
-  - `.formSheet` / `.pageSheet` — центрируются по окну iPad и **выходят** за границы экрана Duo по высоте.
-    `definesPresentationContext` на эти стили не влияет; перехватить без swizzling нельзя.
-  - `UIAlertController(.alert)` — центр окна iPad (при центрированном устройстве визуально внутри, но не привязан к Duo).
-  - sheet с detents (`.medium`) — позиционирует UIKit относительно окна; в ландшафте оказался у нижнего края области Duo,
-    гарантий нет.
-  - Размер модального контента и его size class берутся от окна iPad, а не от пресета Duo.
-  - Юнит-тест на положение модалок не получился: `UIWindow(frame:)` без сцены в xctest не завершает `present`.
-- **Клавиатура** показывается на весь iPad. `keyboardLayoutGuide` у контента считает пересечение с реальной клавиатурой
-  iPad, а не с экраном Duo; эмулировать высоту клавиатуры Duo публичными API нельзя.
-- **Алерты, action sheet, popover, activity view, системные шиты** позиционируются UIKit относительно окна iPad.
-- **Status bar / home indicator** — от iPad; safe area Duo задаётся только через `safeAreaInsets` в JSON (пока нули).
-- **Stage Manager / Split View iPad**: если окно становится меньше внутреннего экрана Duo, эмулятор не масштабирует контент.
-  Проверка размера выполняется только при `install`.
-- **Первый кадр** SwiftUI-приложения рисуется в размер iPad до установки хоста.
-- **Darwin notifications, отправленные до установки хоста** (первые ~0.5–1 с после запуска), теряются.
-- `.continuous` в промежуточных размерах показывает реальные артефакты UIKit (например, large title
-  navigation bar перекрывает первую строку списка при быстром ресайзе). Это ожидаемо: режим для поиска таких багов.
-- В `.realistic` на время анимации контент скрыт оверлеем, `DuoPreview.state` уже равен цели.
-
-## Производительность `.continuous`
-
-После каждой непрерывной анимации пишется лог `continuous: N frames in T s (X fps)`.
-Замер: fold/unfold ×3, Debug-сборка (`-Onone`), iPad Pro 13" sim. Во время замеров на Mac шла сторонняя сборка Xcode,
-поэтому разброс большой.
-
-| Экран примера | fps |
+| Area | Verified by |
 |---|---|
-| Posture Debug (split view + label) | 23–53 |
-| Feed (split view + compositional grid 120 ячеек + search) | 11–48 |
-| Article (split view + ~35 многострочных UILabel в stack view) | 10–21 |
+| Core model, presets, host controller | 33 unit tests; UIKit example checked in every preset |
+| Traits and SwiftUI environment | SwiftUI example: environment values, size classes, `NavigationSplitView` collapsing |
+| Animations | Frame-by-frame screenshots of 3D fold and live resize, using slowed-down presets |
+| Debug panel and keyboard | Panel checked visually. Key commands are registered, but key presses weren't automated |
+| Half-open posture | 3D view in portrait and landscape, `hingeRect` in UIKit and SwiftUI |
+| Tools | Screenshots and stress test covered by unit tests; terminal commands and the report tested in the simulator |
+| Release builds | A Release build launched in the simulator: full-size app, no panel, no logs, terminal commands ignored |
 
-**Критерий «60 fps для простого контента» не подтверждён.** Основная стоимость — перевёрстка контента в каждом кадре
-(UISplitViewController + Auto Layout на каждый новый размер), это и есть живой ресайз. Сделано: трейт `DuoHingeTrait` во время
-`.continuous` меняется только при смене posture/hingeRect, а не каждый кадр (перерасчёт трейтов по всей иерархии).
-Однозначного выигрыша на шумных замерах не видно. Дальше: замер в Release на разгруженной машине и с пустым
-`UIViewController` в качестве контента, профилирование в Instruments (Time Profiler).
-Режим `continuous(steps:)` для поиска багов вёрстки от fps не зависит.
+The package and both examples build without warnings.
 
-## Открытые вопросы
+## Design decisions
 
-- Реальные размеры в pt, scale, safe areas Duo (сейчас расчёт @3x от 2034×1398 и 2670×1878 px).
-- Угол переключения экранов (40°) и пороги posture (10° / 160°).
-- Какие size class Apple назначит состояниям (особенно split и inner portrait).
-- Положение шарнира: предполагается книжный сгиб (вертикальная линия во внутреннем ландшафте).
-- Появится ли у Apple API позы/шарнира — тогда источник данных для `DuoPostureTrait` / `DuoHingeTrait` заменяется,
-  код приложений не меняется.
+**All geometry comes from JSON.** Screen sizes, angles, thresholds, animation timings and tool settings live in
+`DuoPresets.json`. Colors and paddings of the panel and device frame are visual constants, not part of the model.
+
+**Split presets reference a physical screen.** `inner.split.half` and `inner.split.stacked` point at their parent screen
+(`"screen": "inner.landscape"`). The device frame covers the whole inner screen and the unused half shows a faint
+placeholder. The hinge sits exactly on the content edge, so `hingeRect` is `.null`: a hinge belongs to the content only
+when its center line is strictly inside it.
+
+**Switching presets keeps the half-open angle.** Choosing an inner preset while the inner screen is active keeps the
+current angle, so you can rotate a half-open device. From the outer screen, inner presets open to `angles.open`.
+
+**State tokens.** Screenshot and stress test sequences use `presetId[@angle]`, for example `inner.portrait@90`.
+
+**`DuoPreview.state` is the target state.** It is committed when a transition starts, so observers and the panel see the
+destination immediately. During live resize, posture and hinge traits only change when a posture threshold is crossed.
+Angle changes without animation (the slider, `setHingeAngle(_:animated: false)`) update traits on every change.
+
+**Requests queue up.** A request made during a transition waits for it to finish. The latest request wins, and every
+completion handler still runs.
+
+**The async API is `transition(to:animation:)`.** An async overload of `set(_:animation:)` would make calls without
+`await` ambiguous inside async contexts.
+
+**A custom transition coordinator.** `DuoTransitionCoordinator` implements `UIViewControllerTransitionCoordinator`.
+Alongside blocks run inside the emulator's own animation, and completions run when it ends. The host deliberately
+doesn't call `super.viewWillTransition` when the iPad rotates, because the content size doesn't depend on the window.
+
+**Fold leaves are image snapshots.** The device body (frame, screen and hinge line) is rendered with
+`drawHierarchy(in:afterScreenUpdates:)` and split into halves with `CALayer.contentsRect`, instead of using
+`resizableSnapshotView`. The same code drives both the fold animation and the timer-refreshed 3D view.
+
+**Fold geometry.** Each inner leaf rotates by `(180 − angle) / 2`, forming a V toward the viewer. On the outer screen a
+single leaf rotates by `angle / displaySwitchAngle × rotation(displaySwitchAngle)`, so both rotations match at the switch
+angle and the hand-off looks continuous.
+
+**Orientation and split changes don't fold.** When a 3D fold doesn't cross the display switch angle but the layout
+changes, it falls back to a regular animated UIKit transition.
+
+**Blur during 3D fold.** Blurred copies of the snapshots (`CIGaussianBlur`) cross-fade over the leaves. At the end, a
+blurred snapshot of the new layout dissolves into the live content. Tuned with `blurRadius`, `blurRampFraction` and
+`blurFadeOut`.
+
+**On by default in Debug.** The emulator no longer needs a launch argument. `-DuoPreviewOff` or `DUO_PREVIEW=0` turns
+it off. Release builds are always off.
+
+**Small windows scale the device.** In Stage Manager or with a landscape iPad, the device is scaled down with a transform
+(no less than 50%) instead of refusing to install. Content keeps its exact point size and traits. The docked panel
+reserves space at the top and the device is centered below it.
+
+**Panel height follows its content.** The panel is a SwiftUI view in a `UIHostingController` that reports size changes
+through `preferredContentSize`. Measuring with `sizeThatFits` right after a state change returned the previous height.
+
+**Terminal commands for options.** `com.duolab.option.<name>.on|off` exists because options can't be changed from outside
+through `UserDefaults`: `cfprefsd` caches the values, so editing the plist on disk has no effect.
+
+**Lifecycle tracking without swizzling.** `DuoPreview.track(self)` counts loads, and deallocation is detected with an
+associated object.
+
+**Side toolbar.** For presets with `"sideToolbar": true` in a flat posture (outer, or fully open), the host scans for
+visible `UINavigationController`s every 0.3 s, hides their navigation bar and toolbar, and shows their buttons as icons in
+a `UIGlassEffect` capsule (a blur material before iOS 26). `additionalSafeAreaInsets.right` grows by `sideToolbarWidth`.
+Buttons are triggered with `UIAction.performWithSender`, `UIApplication.sendAction`, menus or `UIControl.sendActions`.
+Back pops the stack, split views get a sidebar toggle, and search temporarily brings the navigation bar back. Bars are
+restored when the state changes. Known gaps:
+
+- A system bar item without an action can't be told apart from a spacer, so it's skipped. In the UIKit example the feed's
+  `+` button disappears for this reason.
+- System items with an action expose no image, so they get a letter or question mark icon.
+- Apps that toggle their own navigation bar will conflict with the hiding.
+
+**Hinge-aligned columns are an app decision.** Both examples size their sidebar to `hingeRect.minX` when half-open with a
+vertical hinge, giving a 50/50 split. The emulator only provides the hinge; it doesn't move app columns.
+
+## Research
+
+### Moving the SwiftUI root into a child controller
+
+**Works, and it's the default.** The `UIHostingController` created by `WindowGroup` becomes a child of the host. Verified
+in the SwiftUI example with `NavigationSplitView`, `.searchable`, `.sheet`, `@State` and trait-bridged environment values
+(`UITraitBridgedEnvironmentKey`). `horizontalSizeClass` updates on fold and unfold, and view state survives.
+
+Installing after a single `DispatchQueue.main.async` produced "Unbalanced calls to begin/end appearance transitions" for
+the hosting controller. Waiting one more run loop turn, until the root finishes appearing, fixes it. The first frame
+still renders at iPad size. UIKit apps hit the same warning when installing after `makeKeyAndVisible()`, which is why the
+docs recommend installing before it.
+
+A fallback, `DuoPreviewHostView { content }`, sizes the content and injects size classes, safe area and Duo environment
+values without touching the window. It has no device frame, panel or `viewWillTransition`, and exists in case moving the
+root breaks in a future SwiftUI release.
+
+**Hinge coordinates in SwiftUI.** `.global` inside a `UIHostingController` doesn't match the content's coordinate space.
+Declare a named coordinate space on the root view and convert through it, as the examples do.
+
+### Live content on two rotated leaves
+
+**Not possible with public API, so the 3D view uses snapshots.**
+
+- A layer renders exactly once in the tree. The only public way to show it twice with different transforms is
+  `CAReplicatorLayer`.
+- `CAReplicatorLayer` applies a cumulative `instanceTransform` (instance 0 is never transformed) and a single mask for all
+  instances, so each copy can't be masked to one half. Nesting replicators would require the live view to have two
+  parents.
+- `_UIPortalView` and `CAPortalLayer` would solve it, but they're private.
+
+The 3D view therefore refreshes `drawHierarchy(afterScreenUpdates: false)` snapshots at `halfOpen3DFPS` (15 fps) and
+disables interaction while it's shown. This conclusion comes from analysis; no replicator prototype was built.
+
+## Bugs found during development
+
+- **Image diff always reported zero changes.** A shared `CIContext` returned stale, all-zero results when comparing
+  renderer-produced images one after another (`a` vs `a`, then `a` vs `b`). A standalone macOS script and an isolated test
+  both counted correctly. Fixed by creating a `CIContext` with `.cacheIntermediates: false` per comparison and counting
+  pixels through an RGBA8 `CGContext` with a known row order.
+- The panel initially appeared on the left, over the device, because its position was computed before layout.
+- The "3D preview only" badge was hidden behind the fold overlay.
+
+## Known limitations
+
+**Modal presentations**, checked with screenshots in the UIKit example (`-screen modals -present <style>`):
+
+- `.currentContext` and `.overCurrentContext` with `definesPresentationContext = true` stay inside the emulated screen.
+- `.formSheet` and `.pageSheet` are centered on the iPad window and extend past the emulated screen. They ignore
+  `definesPresentationContext`, and redirecting them would require swizzling.
+- Alerts are centered on the iPad window. With a centered device they look right, but they aren't tied to it.
+- Sheets with detents are placed by UIKit relative to the window, with no guarantees.
+- Modal content gets its size and size classes from the iPad window, not from the preset.
+- Presentation placement isn't unit-tested: `present` never completes for a scene-less `UIWindow` in xctest.
+
+**Other limitations**
+
+- The keyboard spans the whole iPad, and `keyboardLayoutGuide` measures against it. A device-sized keyboard can't be
+  emulated with public API.
+- Action sheets, popovers, activity views and system sheets are also positioned against the iPad window.
+- The status bar and home indicator belong to the iPad. Emulated safe areas come from `safeAreaInsets` in the JSON.
+- Darwin notifications sent in the first half second or so after launch, before the host is installed, are lost.
+- Live resize exposes real UIKit artifacts at intermediate sizes, such as a large title overlapping the first list row.
+  That's the point of the mode.
+- During a 3D fold the content is covered by the overlay, and `DuoPreview.state` already reports the destination.
+
+## Live resize performance
+
+Every live resize logs `continuous: N frames in T s (X fps)`. Measured over three fold/unfold cycles on a Debug build
+(`-Onone`) in the iPad Pro 13" simulator. Another Xcode build was running on the Mac at the same time, so the numbers
+are noisy.
+
+| Example screen | fps |
+|---|---|
+| Posture Debug (split view and a label) | 23–53 |
+| Feed (split view, 120-cell compositional grid, search) | 11–48 |
+| Article (split view, about 35 multi-line labels in a stack view) | 10–21 |
+
+**60 fps for simple content is not confirmed.** Most of the cost is re-laying out the content every frame
+(`UISplitViewController` plus Auto Layout at each new size), which is inherent to a live resize. The hinge trait now only
+changes on posture or hinge rect changes instead of every frame, since each trait change re-evaluates the whole hierarchy,
+but the noisy measurements showed no clear gain. Next steps: measure a Release build on an idle machine with an empty view
+controller as content, and profile with Instruments. Stepped live resize (`continuous(steps:)`) doesn't depend on frame
+rate.
+
+## Open questions
+
+- Real point sizes, scale and safe areas. Current values are derived from 2034×1398 and 2670×1878 px at @3x.
+- The display switch angle (40°) and posture thresholds (10° and 160°).
+- Which size classes Apple assigns to each state, especially split layouts and inner portrait.
+- The hinge position. A book-style fold is assumed, with a vertical hinge on the landscape inner screen.
+- Whether Apple ships a posture or hinge API. If it does, `DuoPostureTrait` and `DuoHingeTrait` can switch their data
+  source without changes to app code.
