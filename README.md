@@ -5,7 +5,7 @@
 управление из терминала.
 
 ```
-DuoPreviewKit/                 Swift Package (iOS 17+, Swift 6)
+Package.swift, Sources/, Tests/   Swift Package DuoPreviewKit (iOS 17+, Swift 6)
 Examples/DuoExampleUIKit/      тестовое UIKit-приложение (split view, лента, галерея, чат, формы, видео, модалки, posture)
 Examples/DuoExampleSwiftUI/    тестовое SwiftUI-приложение (NavigationSplitView, reader/player по posture/hingeRect)
 NOTES.md                       решения, результаты исследований, ограничения, открытые вопросы
@@ -27,6 +27,19 @@ Destination: **iPad Pro 13-inch**. Дополнительные аргумент
 | `-duoPresets /path/presets.json` | подменить пресеты (`DuoPreview.configure(presetsURL:)`) |
 
 ## Подключение в своё приложение
+
+**Xcode:** File → Add Package Dependencies… → URL репозитория → продукт `DuoPreviewKit` в app target.
+Локально: Add Local… → корень репозитория.
+
+**Package.swift:**
+```swift
+dependencies: [
+    .package(url: "https://github.com/<owner>/<repo>.git", from: "0.1.0"),
+],
+targets: [
+    .target(name: "App", dependencies: [.product(name: "DuoPreviewKit", package: "<repo>")]),
+]
+```
 
 ```swift
 #if DEBUG
@@ -88,6 +101,5 @@ cat "$(xcrun simctl get_app_container booted <bundle-id> data)/Library/Caches/du
 ## Тесты пакета
 
 ```sh
-cd DuoPreviewKit
 xcodebuild test -scheme DuoPreviewKit -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
 ```

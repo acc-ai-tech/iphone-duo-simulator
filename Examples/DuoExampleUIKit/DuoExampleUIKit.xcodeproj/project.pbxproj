@@ -15,7 +15,7 @@
 
 /* Begin PBXFileReference section */
 		02D1EAF1AECD5C327C5E5965 /* ContentScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentScreens.swift; sourceTree = "<group>"; };
-		293795F449048E2CF9AC590B /* DuoPreviewKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DuoPreviewKit; path = ../../DuoPreviewKit; sourceTree = SOURCE_ROOT; };
+		1D195905195931448027404E /* iDUOTest1 */ = {isa = PBXFileReference; lastKnownFileType = folder; name = iDUOTest1; path = ../..; sourceTree = SOURCE_ROOT; };
 		92D63E58A234867046617B72 /* InteractiveScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractiveScreens.swift; sourceTree = "<group>"; };
 		B0B097F4ACF749000F02F213 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		B9DB9417D3AE329F7D5C65F8 /* DuoExampleUIKit.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = DuoExampleUIKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -45,7 +45,7 @@
 		673078055CA7F03859CDAF2E /* Packages */ = {
 			isa = PBXGroup;
 			children = (
-				293795F449048E2CF9AC590B /* DuoPreviewKit */,
+				1D195905195931448027404E /* iDUOTest1 */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
@@ -116,7 +116,7 @@
 			mainGroup = 96185FBB0AE150510DFDC11E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				289BD7AB3A358D55AF21636B /* XCLocalSwiftPackageReference "../../DuoPreviewKit" */,
+				CD5D1C1417CF75B01A5F5107 /* XCLocalSwiftPackageReference "../.." */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 51CC0B505D689C485276D7ED /* Products */;
@@ -331,9 +331,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		289BD7AB3A358D55AF21636B /* XCLocalSwiftPackageReference "../../DuoPreviewKit" */ = {
+		CD5D1C1417CF75B01A5F5107 /* XCLocalSwiftPackageReference "../.." */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../DuoPreviewKit;
+			relativePath = ../..;
 		};
 /* End XCLocalSwiftPackageReference section */
 

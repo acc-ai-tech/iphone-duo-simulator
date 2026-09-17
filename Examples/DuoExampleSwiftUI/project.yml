@@ -5,7 +5,7 @@ options:
     iOS: "17.0"
 packages:
   DuoPreviewKit:
-    path: ../../DuoPreviewKit
+    path: ../..
 settings:
   base:
     SWIFT_VERSION: "6.0"

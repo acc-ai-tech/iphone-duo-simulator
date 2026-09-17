@@ -13,7 +13,7 @@
 
 /* Begin PBXFileReference section */
 		3475B29EED9C9FE0C2CC7678 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		356287178F5D1CA5DB67F6C0 /* DuoPreviewKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DuoPreviewKit; path = ../../DuoPreviewKit; sourceTree = SOURCE_ROOT; };
+		4FB10616EE240DA82E4CF03C /* iDUOTest1 */ = {isa = PBXFileReference; lastKnownFileType = folder; name = iDUOTest1; path = ../..; sourceTree = SOURCE_ROOT; };
 		953A907380184A8B311F533D /* DuoExampleSwiftUIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoExampleSwiftUIApp.swift; sourceTree = "<group>"; };
 		EA2FA43DC5691857E02D45E1 /* DuoExampleSwiftUI.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = DuoExampleSwiftUI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -33,7 +33,7 @@
 		3AA3BB1BFD61D5FCB67B2B46 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
-				356287178F5D1CA5DB67F6C0 /* DuoPreviewKit */,
+				4FB10616EE240DA82E4CF03C /* iDUOTest1 */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
@@ -110,7 +110,7 @@
 			mainGroup = E0884A2742F20963DBE4A7A7;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				771F3B1AF23C318317FB6F41 /* XCLocalSwiftPackageReference "../../DuoPreviewKit" */,
+				64EE94568DF93128219F9A09 /* XCLocalSwiftPackageReference "../.." */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 62AB3BAD63E5EC750875C0F7 /* Products */;
@@ -323,9 +323,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		771F3B1AF23C318317FB6F41 /* XCLocalSwiftPackageReference "../../DuoPreviewKit" */ = {
+		64EE94568DF93128219F9A09 /* XCLocalSwiftPackageReference "../.." */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../DuoPreviewKit;
+			relativePath = ../..;
 		};
 /* End XCLocalSwiftPackageReference section */
 
