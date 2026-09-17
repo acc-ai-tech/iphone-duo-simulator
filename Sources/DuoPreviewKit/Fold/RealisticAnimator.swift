@@ -111,6 +111,24 @@ final class RealisticAnimator {
                 completion()
                 return
             }
+            let layout = host.layout(for: to)
+            let ends3D = host.runtime.options.show3D && layout.posture == .halfOpen && layout.display == .inner
+            if ends3D {
+                // The static 3D view takes over at the same angle: unblur the leaves in place instead of showing a
+                // flat snapshot, which would look like the fold playing a second time.
+                let rotation = config.innerLeafRotation(angle: to.hingeAngle)
+                let fade = FrameClock(duration: config.animation.blurFadeOut, tick: { [unowned self] t in
+                    host.overlay.render(rotation: rotation, shadeOpacity: config.animation.shadeOpacity, blur: 1 - t)
+                }, completion: { [unowned self] in
+                    host.overlay.hide()
+                    clock = nil
+                    retainSelf = nil
+                    completion()
+                })
+                clock = fade
+                fade.run()
+                return
+            }
             // Blurred snapshot of the final layout, then dissolve into the live content.
             showLeaves(for: to, afterScreenUpdates: true)
             host.overlay.render(rotation: 0, shadeOpacity: 0, blur: 1)
