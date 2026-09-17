@@ -168,7 +168,8 @@ duo report                   # writes Library/Caches/duolab-report.json in the a
 ## Side toolbar
 
 On the outer screen and the open landscape inner screen, the navigation bar and toolbar of your app are hidden and their
-buttons move into a glass capsule on the right edge. Your content gets a matching right safe area inset. When the device
+buttons move into a glass capsule on the right edge. Your content gets a matching right safe area inset, and a dashed
+line marks where it starts. When the device
 is half-open, your app's own bars come back.
 
 Turn it off from the panel or with `duo option.sidetoolbar.off`. Configure it per preset with `"sideToolbar"` and set the
@@ -177,6 +178,10 @@ width with `"sideToolbarWidth"` in the JSON.
 It uses public API only, which has a few limits: a system bar item without an action (for example
 `UIBarButtonItem(systemItem: .add)` with no target) can't be told apart from a spacer and is skipped, and apps that toggle
 their navigation bar themselves will fight with it.
+
+If your layout ignores the safe area (for example controls drawn over a full-screen map with `.ignoresSafeArea()`),
+read the insets from your root view rather than from the window. `window.safeAreaInsets` doesn't include the inset the
+emulator adds, and neither will it on devices where the content area differs from the window.
 
 ## Example apps
 

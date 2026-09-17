@@ -268,6 +268,8 @@ final class SideToolbarView: UIView {
 
     private let scrollView = UIScrollView()
     private let stack = UIStackView()
+    /// Dashed vertical line marking where the added right safe area begins.
+    private let boundary = CAShapeLayer()
     /// Status bar stand-in at the top of the strip: time and Wi‑Fi.
     private let status = UIStackView()
     private let clock = UILabel()
@@ -282,6 +284,13 @@ final class SideToolbarView: UIView {
         isHidden = true
         // Transparent: the content's own background extends under the right safe area, so the strip matches it.
         backgroundColor = .clear
+        boundary.fillColor = UIColor.clear.cgColor
+        boundary.lineWidth = 1
+        boundary.lineDashPattern = [4, 4]
+        layer.addSublayer(boundary)
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: SideToolbarView, _: UITraitCollection) in
+            view.setNeedsLayout()
+        }
         clock.font = .systemFont(ofSize: 15, weight: .semibold)
         clock.textColor = .label
         clock.textAlignment = .center
@@ -312,6 +321,16 @@ final class SideToolbarView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        let path = UIBezierPath()
+        path.move(to: CGPoint(x: 0.5, y: 0))
+        path.addLine(to: CGPoint(x: 0.5, y: bounds.height))
+        boundary.path = path.cgPath
+        boundary.frame = bounds
+        boundary.strokeColor = UIColor.label.withAlphaComponent(0.3).resolvedColor(with: traitCollection).cgColor
+        CATransaction.commit()
+
         let topInset: CGFloat = 20
         let statusHeight: CGFloat = topInset + 60
         // Column of pill width, pinned to the right edge with a margin.
