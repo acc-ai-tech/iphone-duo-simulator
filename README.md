@@ -28,16 +28,16 @@ Destination: **iPad Pro 13-inch**. Дополнительные аргумент
 
 ## Подключение в своё приложение
 
-**Xcode:** File → Add Package Dependencies… → URL репозитория → продукт `DuoPreviewKit` в app target.
+**Xcode:** File → Add Package Dependencies… → `https://github.com/acc-ai-tech/iphone-duo-simulator` → продукт `DuoPreviewKit` в app target.
 Локально: Add Local… → корень репозитория.
 
 **Package.swift:**
 ```swift
 dependencies: [
-    .package(url: "https://github.com/<owner>/<repo>.git", from: "0.1.0"),
+    .package(url: "https://github.com/acc-ai-tech/iphone-duo-simulator.git", from: "0.1.0"),
 ],
 targets: [
-    .target(name: "App", dependencies: [.product(name: "DuoPreviewKit", package: "<repo>")]),
+    .target(name: "App", dependencies: [.product(name: "DuoPreviewKit", package: "iphone-duo-simulator")]),
 ]
 ```
 
@@ -103,3 +103,7 @@ cat "$(xcrun simctl get_app_container booted <bundle-id> data)/Library/Caches/du
 ```sh
 xcodebuild test -scheme DuoPreviewKit -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE).
