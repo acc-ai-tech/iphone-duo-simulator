@@ -27,23 +27,31 @@ final class ModalPlacement {
         let layout = host.layout(for: host.displayedState)
         let hinge = layout.hingeRectInScreen
 
+        let content = host.contentContainer.convert(host.contentContainer.bounds, to: window)
+
         // Half-open: the half past the hinge, right of it in landscape and below it in portrait.
         if layout.display == .inner, layout.posture == .halfOpen, !hinge.isNull {
+            var half: CGRect?
             switch layout.hingeAxis {
             case .vertical:
-                return host.screenView.convert(CGRect(x: hinge.maxX, y: 0,
-                                                      width: layout.screenSize.width - hinge.maxX,
-                                                      height: layout.screenSize.height), to: window)
+                half = CGRect(x: hinge.maxX, y: 0,
+                              width: layout.screenSize.width - hinge.maxX, height: layout.screenSize.height)
             case .horizontal:
-                return host.screenView.convert(CGRect(x: 0, y: hinge.maxY,
-                                                      width: layout.screenSize.width,
-                                                      height: layout.screenSize.height - hinge.maxY), to: window)
+                half = CGRect(x: 0, y: hinge.maxY,
+                              width: layout.screenSize.width, height: layout.screenSize.height - hinge.maxY)
             case .none:
-                break
+                half = nil
+            }
+            if let half {
+                // In split presets the far half belongs to the other app, so stay inside the app's own area.
+                let inContent = host.screenView.convert(half, to: window).intersection(content)
+                if !inContent.isNull, inContent.width > 80, inContent.height > 80 {
+                    return inContent
+                }
             }
         }
         // Otherwise keep presentations inside the app's content area.
-        return host.contentContainer.convert(host.contentContainer.bounds, to: window)
+        return content
     }
 
     func start() {

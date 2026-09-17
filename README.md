@@ -204,7 +204,8 @@ Launch arguments:
 
 Sheets, form sheets and alerts are kept inside the emulated screen instead of being centered on the iPad window. While
 the device is half-open they move into the half past the hinge: right of it in landscape, below it in portrait, and with
-the 3D view on they fold along with that half. Toggle with **Modals right** in the advanced panel or
+the 3D view on they fold along with that half. In split presets they stay in the app's own half, not in the part that
+belongs to another app. Toggle with **Modals right** in the advanced panel or
 `duo option.modalshalf.off`.
 
 This uses no private API, but UIKit offers no hook for placing presentations, so the emulator repositions the container
