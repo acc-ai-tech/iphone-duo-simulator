@@ -91,10 +91,10 @@ restored when the state changes. Known gaps:
 **Hinge-aligned columns are an app decision.** Both examples size their sidebar to `hingeRect.minX` when half-open with a
 vertical hinge, giving a 50/50 split. The emulator only provides the hinge; it doesn't move app columns.
 
-**Modals while half-open.** UIKit has no public hook for placing presentations, so the host moves the container view
-UIKit creates in the window (the sibling of the host's own container) into the half past the hinge, and applies the leaf
-rotation while the 3D view is on. Only for the half-open posture; a display link keeps the frame in sync. Popovers with a
-source view and the keyboard stay where UIKit puts them.
+**Modals.** UIKit has no public hook for placing presentations, so the host moves the container view UIKit creates in the
+window (the sibling of the host's own container) into the content area, or into the half past the hinge while half-open,
+where it also applies the leaf rotation if the 3D view is on. A display link keeps the frame in sync; the host reference
+is weak because the link retains its target. Popovers with a source view and the keyboard stay where UIKit puts them.
 
 ## Research
 

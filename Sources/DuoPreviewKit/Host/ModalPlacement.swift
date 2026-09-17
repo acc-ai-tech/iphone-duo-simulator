@@ -1,6 +1,7 @@
 import UIKit
 
-/// Keeps modal presentations inside the far half of the inner screen while the device is half-open.
+/// Keeps modal presentations inside the emulated screen: in the content area, or in the far half of the inner screen
+/// while the device is half-open.
 ///
 /// UIKit positions sheets, form sheets and alerts against the window, not against the emulated screen, and there is no
 /// public hook to change that. As a workaround the container view UIKit creates for a presentation is moved and resized
@@ -9,7 +10,8 @@ import UIKit
 /// Best effort: some presentations (popovers anchored to a source view, the keyboard) are still placed by UIKit.
 @MainActor
 final class ModalPlacement {
-    private unowned let host: DuoHostViewController
+    // CADisplayLink retains its target, so this object can outlive the host: keep the reference weak.
+    private weak var host: DuoHostViewController?
     private var displayLink: CADisplayLink?
     private var adjusted = NSHashTable<UIView>.weakObjects()
 
@@ -19,25 +21,29 @@ final class ModalPlacement {
 
     /// Area that modals should occupy, in window coordinates, or `nil` when they should be left alone.
     private var targetFrame: CGRect? {
-        guard host.runtime.options.modalsOnHalf, host.isViewLoaded, let window = host.view.window else { return nil }
-        let layout = host.layout(for: host.displayedState)
-        // Only while half-open: fully open behaves like one screen, so modals stay where UIKit puts them.
-        guard layout.display == .inner, layout.posture == .halfOpen, !layout.hingeRectInScreen.isNull else { return nil }
-
-        // The half past the hinge: right of it in landscape, below it in portrait.
-        let hinge = layout.hingeRectInScreen
-        let half: CGRect
-        switch layout.hingeAxis {
-        case .vertical:
-            half = CGRect(x: hinge.maxX, y: 0,
-                          width: layout.screenSize.width - hinge.maxX, height: layout.screenSize.height)
-        case .horizontal:
-            half = CGRect(x: 0, y: hinge.maxY,
-                          width: layout.screenSize.width, height: layout.screenSize.height - hinge.maxY)
-        case .none:
+        guard let host, host.runtime.options.modalsOnHalf, host.isViewLoaded, let window = host.view.window else {
             return nil
         }
-        return host.screenView.convert(half, to: window)
+        let layout = host.layout(for: host.displayedState)
+        let hinge = layout.hingeRectInScreen
+
+        // Half-open: the half past the hinge, right of it in landscape and below it in portrait.
+        if layout.display == .inner, layout.posture == .halfOpen, !hinge.isNull {
+            switch layout.hingeAxis {
+            case .vertical:
+                return host.screenView.convert(CGRect(x: hinge.maxX, y: 0,
+                                                      width: layout.screenSize.width - hinge.maxX,
+                                                      height: layout.screenSize.height), to: window)
+            case .horizontal:
+                return host.screenView.convert(CGRect(x: 0, y: hinge.maxY,
+                                                      width: layout.screenSize.width,
+                                                      height: layout.screenSize.height - hinge.maxY), to: window)
+            case .none:
+                break
+            }
+        }
+        // Otherwise keep presentations inside the app's content area.
+        return host.contentContainer.convert(host.contentContainer.bounds, to: window)
     }
 
     func start() {
@@ -59,7 +65,10 @@ final class ModalPlacement {
     }
 
     @objc private func tick() {
-        guard let window = host.view.window else { return }
+        guard let host, let window = host.view.window else {
+            stop()
+            return
+        }
         guard let target = targetFrame else {
             restoreAll()
             return
@@ -88,7 +97,7 @@ final class ModalPlacement {
 
     /// Rotation of the leaf the far half sits on, or `nil` when the flat content is shown.
     private func leafTransform() -> (transform: CATransform3D, anchor: CGPoint, hingePoint: CGPoint)? {
-        guard host.isShowingLeaves, let window = host.view.window else { return nil }
+        guard let host, host.isShowingLeaves, let window = host.view.window else { return nil }
         let config = host.config
         let layout = host.layout(for: host.displayedState)
         let rotation = config.innerLeafRotation(angle: host.displayedState.hingeAngle) * .pi / 180
@@ -111,7 +120,10 @@ final class ModalPlacement {
     }
 
     private func restoreAll() {
-        guard let window = host.view.window else { return }
+        guard let window = host?.view.window else {
+            adjusted.removeAllObjects()
+            return
+        }
         for view in adjusted.allObjects where view.window === window {
             view.layer.transform = CATransform3DIdentity
             view.layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
