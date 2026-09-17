@@ -34,8 +34,8 @@ struct DuoOptions: Codable, Equatable {
     var show3D = true
     var blurOnFold = true
     var sideToolbar = true
-    /// Dashed line marking where the side toolbar safe area starts.
-    var safeAreaLine = true
+    /// Dashed line marking where the side toolbar safe area starts. Off by default: it is a debugging aid.
+    var safeAreaLine = false
     var showSizes = true
     var hudVisible = true
     var hudCollapsed = false

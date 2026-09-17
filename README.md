@@ -167,9 +167,9 @@ duo stress                   # runs the stress test
 ## Side toolbar
 
 On the outer screen and the open landscape inner screen, the navigation bar and toolbar of your app are hidden and their
-buttons move into a glass capsule on the right edge. Your content gets a matching right safe area inset, and a dashed
-line marks where it starts (turn the line off with the **Line** toggle in the advanced panel or
-`duo option.safearealine.off`). When the device
+buttons move into a glass capsule on the right edge. Your content gets a matching right safe area inset, and
+the **Line** toggle in the advanced
+panel (or `duo option.safearealine.on`) marks where it starts with a dashed line. When the device
 is half-open, your app's own bars come back.
 
 Turn it off from the panel or with `duo option.sidetoolbar.off`. Configure it per preset with `"sideToolbar"` and set the
