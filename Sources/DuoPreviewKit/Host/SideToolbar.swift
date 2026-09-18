@@ -126,7 +126,7 @@ final class SideToolbarController {
             }
             controller.children.forEach(visit)
         }
-        visit(host.content)
+        if let content = host.contentController { visit(content) }
         return result
     }
 

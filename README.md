@@ -88,6 +88,21 @@ WindowGroup {
 That's it. In Debug builds the emulator turns on automatically. Pass `-DuoPreviewOff` or set `DUO_PREVIEW=0` to turn it
 off. In Release builds it is always off.
 
+### Hosting modes
+
+By default the emulator resizes your app's own window to the emulated screen and draws the device around it, in windows
+below and above yours. Your view hierarchy is never touched, so app state and appearance callbacks are unaffected.
+
+The previous behaviour — moving your root view controller into a container inside the emulator — is still available:
+
+```swift
+DuoPreview.hostingMode = .containerChild   // before install(in:)
+```
+
+or with the launch argument `-DuoHostingMode container`. Use it if the window-resizing mode misbehaves; note that SwiftUI
+can rebuild the moved hierarchy, which resets scene-level `@State` (an animated splash driven from `App` may never
+finish, for example).
+
 ### Reacting to posture
 
 UIKit:

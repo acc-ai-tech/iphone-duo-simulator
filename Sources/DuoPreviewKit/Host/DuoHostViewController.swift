@@ -24,7 +24,11 @@ struct DuoGeometry: Equatable {
 
 /// Root controller that hosts the app's original root controller inside a Duo-sized container.
 final class DuoHostViewController: UIViewController {
-    let content: UIViewController
+    /// The app's controller: a child of this host in `.containerChild` mode, or the resized window's root
+    /// controller in `.resizeWindow` mode, where the host only draws the device around it.
+    weak var contentController: UIViewController?
+    /// `nil` in `.resizeWindow` mode: the app keeps its own window and is not reparented.
+    private let child: UIViewController?
     unowned let runtime: DuoRuntime
     var config: DuoConfiguration { runtime.config }
 
@@ -45,13 +49,16 @@ final class DuoHostViewController: UIViewController {
     private(set) var geometry: DuoGeometry
     /// Set while an animator drives frames; blocks automatic relayout.
     var isAnimating = false
+    /// Called after every layout pass so the window host can follow the content frame.
+    var onGeometryChange: ((DuoGeometry) -> Void)?
     private var liveLeaves: LeafSnapshotter?
     private(set) lazy var sideToolbar = SideToolbarController(host: self)
     private(set) lazy var modalPlacement = ModalPlacement(host: self)
     private var lastTraits: (DuoSizeClassRule, DuoPosture, DuoHinge)?
 
-    init(content: UIViewController, runtime: DuoRuntime) {
-        self.content = content
+    init(child: UIViewController?, runtime: DuoRuntime) {
+        self.child = child
+        self.contentController = child
         self.runtime = runtime
         displayedState = runtime.state
         geometry = DuoGeometry(layout: runtime.state.layout(in: runtime.config), angle: runtime.state.hingeAngle)
@@ -113,11 +120,13 @@ final class DuoHostViewController: UIViewController {
         previewBadge.isHidden = true
         view.addSubview(previewBadge)
 
-        addChild(content)
-        content.view.frame = contentContainer.bounds
-        content.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        contentContainer.addSubview(content.view)
-        content.didMove(toParent: self)
+        if let child {
+            addChild(child)
+            child.view.frame = contentContainer.bounds
+            child.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            contentContainer.addSubview(child.view)
+            child.didMove(toParent: self)
+        }
 
         applyTraits(layout: layout(for: displayedState), angle: displayedState.hingeAngle)
         applyStyle()
@@ -155,8 +164,8 @@ final class DuoHostViewController: UIViewController {
         })
     }
 
-    override var childForStatusBarStyle: UIViewController? { content }
-    override var childForHomeIndicatorAutoHidden: UIViewController? { content }
+    override var childForStatusBarStyle: UIViewController? { child }
+    override var childForHomeIndicatorAutoHidden: UIViewController? { child }
 
     // MARK: Keyboard
 
@@ -234,16 +243,17 @@ final class DuoHostViewController: UIViewController {
         previewBadge.center = CGPoint(x: bezelView.frame.midX, y: bezelView.frame.maxY - previewBadge.bounds.height / 2 - 16)
         applySafeArea()
         contentContainer.layoutIfNeeded()
+        onGeometryChange?(geometry)
     }
 
     private func applySafeArea() {
         let preset = layout(for: displayedState).safeAreaInsets
-        let real = contentContainer.safeAreaInsets
+        let real = runtime.windowHost?.appWindow.safeAreaInsets ?? contentContainer.safeAreaInsets
         let insets = UIEdgeInsets(top: max(0, preset.top - real.top), left: max(0, preset.left - real.left),
                                   bottom: max(0, preset.bottom - real.bottom),
                                   right: max(0, preset.right - real.right) + sideToolbar.width)
-        if content.additionalSafeAreaInsets != insets {
-            content.additionalSafeAreaInsets = insets
+        if let contentController, contentController.additionalSafeAreaInsets != insets {
+            contentController.additionalSafeAreaInsets = insets
         }
     }
 
@@ -269,20 +279,21 @@ final class DuoHostViewController: UIViewController {
         if let last = lastTraits, last.0 == layout.sizeClass, last.1 == posture, last.2 == hinge { return }
         lastTraits = (layout.sizeClass, posture, hinge)
 
-        let overrides = content.traitOverrides
+        guard let contentController else { return }
+        let overrides = contentController.traitOverrides
         let h: UIUserInterfaceSizeClass = layout.sizeClass.horizontal == .compact ? .compact : .regular
         let v: UIUserInterfaceSizeClass = layout.sizeClass.vertical == .compact ? .compact : .regular
         if !overrides.contains(UITraitHorizontalSizeClass.self) || overrides.horizontalSizeClass != h {
-            content.traitOverrides.horizontalSizeClass = h
+            contentController.traitOverrides.horizontalSizeClass = h
         }
         if !overrides.contains(UITraitVerticalSizeClass.self) || overrides.verticalSizeClass != v {
-            content.traitOverrides.verticalSizeClass = v
+            contentController.traitOverrides.verticalSizeClass = v
         }
         if !overrides.contains(DuoPostureTrait.self) || overrides[DuoPostureTrait.self] != posture {
-            content.traitOverrides[DuoPostureTrait.self] = posture
+            contentController.traitOverrides[DuoPostureTrait.self] = posture
         }
         if !overrides.contains(DuoHingeTrait.self) || overrides[DuoHingeTrait.self] != hinge {
-            content.traitOverrides[DuoHingeTrait.self] = hinge
+            contentController.traitOverrides[DuoHingeTrait.self] = hinge
         }
     }
 
@@ -297,7 +308,7 @@ final class DuoHostViewController: UIViewController {
         applyTraits(layout: newLayout, angle: state.hingeAngle)
         if isViewLoaded { sideToolbar.update() }
         if let coordinator, newLayout.contentFrame.size != oldSize {
-            content.viewWillTransition(to: newLayout.contentFrame.size, with: coordinator)
+            contentController?.viewWillTransition(to: newLayout.contentFrame.size, with: coordinator)
         }
     }
 
@@ -395,17 +406,40 @@ final class DuoHostViewController: UIViewController {
 
     /// Puts the fold overlay above the device (and the 3D badge above the overlay).
     func raiseOverlay() {
-        view.bringSubviewToFront(overlay)
-        view.bringSubviewToFront(previewBadge)
+        overlay.superview?.bringSubviewToFront(overlay)
+        previewBadge.superview?.bringSubviewToFront(previewBadge)
+    }
+
+    /// Moves the fold overlay and the 3D badge into another view, used by window mode to draw them above the app's
+    /// own window. Their frames keep using screen coordinates, which both windows share.
+    func moveOverlay(to container: UIView) {
+        container.addSubview(overlay)
+        container.addSubview(previewBadge)
+        overlay.frame = container.bounds
+    }
+
+    /// Lays the moved overlay out; called by the window host after each layout pass.
+    func layoutMovedOverlay(in container: UIView) {
+        overlay.frame = container.bounds
+        previewBadge.sizeToFit()
+        previewBadge.center = CGPoint(x: bezelView.frame.midX,
+                                      y: bezelView.frame.maxY - previewBadge.bounds.height / 2 - 16)
     }
 
     // MARK: Snapshots
 
     /// Image of the device body (bezel, screen, hinge line, content).
     func snapshotDevice(afterScreenUpdates: Bool) -> UIImage {
+        let windowHost = runtime.windowHost
+        let content = windowHost?.contentSnapshot(afterScreenUpdates: afterScreenUpdates)
         let renderer = UIGraphicsImageRenderer(bounds: bezelView.bounds)
         return renderer.image { _ in
             _ = bezelView.drawHierarchy(in: bezelView.bounds, afterScreenUpdates: afterScreenUpdates)
+            // In window mode the app lives in its own window, so it is drawn into the content area here.
+            if let content {
+                let frame = screenView.convert(geometry.contentFrame, to: bezelView)
+                content.draw(in: frame)
+            }
         }
     }
 }

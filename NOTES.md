@@ -98,6 +98,20 @@ is weak because the link retains its target. Popovers with a source view and the
 
 ## Research
 
+### Hosting modes
+
+The default is now `.resizeWindow`: the app keeps its window and its hierarchy, the window is resized to the content
+frame (with a transform when the device is scaled), the device chrome is drawn in a window one level below, and the fold
+leaves, the 3D badge, the hinge line and the right toolbar are drawn above it (the hinge line and toolbar as subviews of
+the app window, the leaves in a passthrough window above). Snapshots for the fold compose the chrome image with a
+`drawHierarchy` image of the app window; the app window is never hidden, because a hidden window renders nothing.
+
+`.containerChild` keeps the old behaviour and is used as a fallback when the window has no scene (unit tests).
+
+Why: moving a SwiftUI root controller makes SwiftUI rebuild the hierarchy and reset scene-level `@State`. A real app
+(a splash flag in `App` plus `onAppear`) never left its splash screen. Resizing the window fixes that class of problems
+and also removes the appearance-transition warnings.
+
 ### Moving the SwiftUI root into a child controller
 
 **Works, and it's the default.** The `UIHostingController` created by `WindowGroup` becomes a child of the host. Verified

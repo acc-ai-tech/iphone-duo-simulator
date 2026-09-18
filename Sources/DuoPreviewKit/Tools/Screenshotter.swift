@@ -19,6 +19,9 @@ enum Screenshotter {
 
     /// Renders the content container (without HUD, frame or hinge overlay).
     static func captureContent(host: DuoHostViewController) -> UIImage {
+        if let windowHost = DuoRuntime.shared.windowHost {
+            return windowHost.contentSnapshot(afterScreenUpdates: true)
+        }
         let view = host.contentContainer
         let format = UIGraphicsImageRendererFormat.preferred()
         format.opaque = true

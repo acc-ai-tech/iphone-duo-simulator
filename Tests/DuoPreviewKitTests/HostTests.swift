@@ -24,6 +24,8 @@ final class HostTests: XCTestCase {
 
     override func setUp() async throws {
         DuoPreview.forceEnable()
+        // Window mode needs a real scene; these tests drive the container host directly.
+        DuoPreview.hostingMode = .containerChild
         runtime.resetForTesting()
         spy = SpyViewController()
         navigation = UINavigationController(rootViewController: spy)
@@ -53,11 +55,11 @@ final class HostTests: XCTestCase {
 
     func testInstallWrapsRoot() throws {
         XCTAssertTrue(DuoPreview.isInstalled)
-        XCTAssertTrue(try host.content === navigation)
+        XCTAssertTrue(try host.contentController === navigation)
         XCTAssertTrue(navigation.parent is DuoHostViewController)
         // Second install is a no-op.
         DuoPreview.install(in: window)
-        XCTAssertTrue(try host.content === navigation)
+        XCTAssertTrue(try host.contentController === navigation)
     }
 
     func testContentGetsExactPresetSizeAndSizeClasses() async throws {

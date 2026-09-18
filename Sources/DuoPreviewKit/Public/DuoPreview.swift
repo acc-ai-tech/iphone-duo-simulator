@@ -47,6 +47,16 @@ public final class DuoSubscription {
     }
 }
 
+/// How the emulator hosts the app.
+public enum DuoHostingMode: String, Sendable {
+    /// Resizes the app's own window to the emulated screen and draws the device around it. The app's view hierarchy
+    /// is untouched, so its state and appearance callbacks are unaffected.
+    case resizeWindow
+    /// Moves the app's root controller into a container inside the emulator. Some apps lose scene-level `@State`
+    /// when SwiftUI rebuilds the moved hierarchy.
+    case containerChild
+}
+
 /// Entry point of DuoPreviewKit.
 ///
 /// Every API is safe to call in release builds or when the emulator is not enabled: calls become no-ops and
@@ -54,6 +64,15 @@ public final class DuoSubscription {
 @MainActor
 public enum DuoPreview {
     private static var forced = false
+
+    /// How the app is hosted; set it before ``install(in:)``. Overridden by `-DuoHostingMode container|window`.
+    public static var hostingMode: DuoHostingMode = {
+        let info = ProcessInfo.processInfo
+        if let index = info.arguments.firstIndex(of: "-DuoHostingMode"), index + 1 < info.arguments.count {
+            return info.arguments[index + 1].hasPrefix("container") ? .containerChild : .resizeWindow
+        }
+        return .resizeWindow
+    }()
 
     // MARK: Enabling
 

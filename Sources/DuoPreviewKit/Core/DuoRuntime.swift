@@ -58,6 +58,7 @@ final class DuoRuntime {
     private(set) var transitionCount = 0
 
     weak var host: DuoHostViewController?
+    var windowHost: WindowHost?
     var hud: HUDController?
     var remote: DarwinNotificationListener?
     let ignoredViews = NSHashTable<UIView>.weakObjects()
@@ -87,7 +88,7 @@ final class DuoRuntime {
     // MARK: Install
 
     func install(in window: UIWindow) {
-        if window.rootViewController is DuoHostViewController { return }
+        if window.rootViewController is DuoHostViewController || windowHost != nil { return }
         guard let root = window.rootViewController else {
             duoPrint("install(in:) skipped: window has no rootViewController yet")
             return
@@ -110,8 +111,21 @@ final class DuoRuntime {
                 + "the device is shown scaled down (content keeps exact point sizes)")
         }
 
-        let host = DuoHostViewController(content: root, runtime: self)
-        window.rootViewController = host
+        let host: DuoHostViewController
+        switch DuoPreview.hostingMode {
+        case .resizeWindow:
+            if let windowHost = WindowHost(appWindow: window, runtime: self) {
+                self.windowHost = windowHost
+                host = windowHost.host
+            } else {
+                // No scene (unit tests): fall back to hosting the root controller in a container.
+                host = DuoHostViewController(child: root, runtime: self)
+                window.rootViewController = host
+            }
+        case .containerChild:
+            host = DuoHostViewController(child: root, runtime: self)
+            window.rootViewController = host
+        }
         self.host = host
         duoPrint("installed. state=\(state.token(in: config)) animation=\(animation.kind.rawValue)")
 
@@ -237,6 +251,8 @@ final class DuoRuntime {
     #if DEBUG
     /// Resets in-memory state for unit tests.
     func resetForTesting() {
+        windowHost?.restore()
+        windowHost = nil
         config = .current
         state = DuoState()
         animation = .none

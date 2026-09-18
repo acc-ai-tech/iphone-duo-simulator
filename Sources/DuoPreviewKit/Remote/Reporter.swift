@@ -27,7 +27,7 @@ enum Reporter {
         let runtime = DuoRuntime.shared
         let state = runtime.state
         let layout = state.layout(in: runtime.config)
-        let insets = runtime.host?.content.view.safeAreaInsets ?? .zero
+        let insets = runtime.host?.contentController?.view.safeAreaInsets ?? .zero
         return Report(
             state: state.token(in: runtime.config),
             contentSize: [layout.contentFrame.width, layout.contentFrame.height],

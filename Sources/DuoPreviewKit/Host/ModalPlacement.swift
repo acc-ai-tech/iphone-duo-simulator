@@ -21,13 +21,15 @@ final class ModalPlacement {
 
     /// Area that modals should occupy, in window coordinates, or `nil` when they should be left alone.
     private var targetFrame: CGRect? {
-        guard let host, host.runtime.options.modalsOnHalf, host.isViewLoaded, let window = host.view.window else {
-            return nil
-        }
+        guard let host, host.runtime.options.modalsOnHalf, host.isViewLoaded else { return nil }
+        // In window mode presentations live in the app's own window, which already is the content area.
+        let windowHost = host.runtime.windowHost
+        guard let window = windowHost?.appWindow ?? host.view.window else { return nil }
         let layout = host.layout(for: host.displayedState)
         let hinge = layout.hingeRectInScreen
 
-        let content = host.contentContainer.convert(host.contentContainer.bounds, to: window)
+        let content = windowHost.map { $0.appWindow.bounds }
+            ?? host.contentContainer.convert(host.contentContainer.bounds, to: window)
 
         // Half-open: the half past the hinge, right of it in landscape and below it in portrait.
         if layout.display == .inner, layout.posture == .halfOpen, !hinge.isNull {
@@ -44,7 +46,7 @@ final class ModalPlacement {
             }
             if let half {
                 // In split presets the far half belongs to the other app, so stay inside the app's own area.
-                let inContent = host.screenView.convert(half, to: window).intersection(content)
+                let inContent = screenToWindow(half, host: host).intersection(content)
                 if !inContent.isNull, inContent.width > 80, inContent.height > 80 {
                     return inContent
                 }
@@ -105,7 +107,7 @@ final class ModalPlacement {
 
     /// Rotation of the leaf the far half sits on, or `nil` when the flat content is shown.
     private func leafTransform() -> (transform: CATransform3D, anchor: CGPoint, hingePoint: CGPoint)? {
-        guard let host, host.isShowingLeaves, let window = host.view.window else { return nil }
+        guard let host, host.isShowingLeaves else { return nil }
         let config = host.config
         let layout = host.layout(for: host.displayedState)
         let rotation = config.innerLeafRotation(angle: host.displayedState.hingeAngle) * .pi / 180
@@ -115,16 +117,28 @@ final class ModalPlacement {
         let hinge = layout.hingeRectInScreen
         switch layout.hingeAxis {
         case .vertical:
-            let point = host.screenView.convert(CGPoint(x: hinge.midX, y: hinge.midY), to: window)
+            let point = screenToWindow(hinge, host: host).origin.applying(
+                CGAffineTransform(translationX: hinge.width / 2, y: hinge.height / 2))
             return (CATransform3DConcat(CATransform3DMakeRotation(-rotation, 0, 1, 0), perspective),
                     CGPoint(x: 0, y: 0.5), point)
         case .horizontal:
-            let point = host.screenView.convert(CGPoint(x: hinge.midX, y: hinge.midY), to: window)
+            let point = screenToWindow(hinge, host: host).origin.applying(
+                CGAffineTransform(translationX: hinge.width / 2, y: hinge.height / 2))
             return (CATransform3DConcat(CATransform3DMakeRotation(rotation, 1, 0, 0), perspective),
                     CGPoint(x: 0.5, y: 0), point)
         case .none:
             return nil
         }
+    }
+
+    /// Screen coordinates of the emulated device → coordinates of the window the presentation lives in.
+    private func screenToWindow(_ rect: CGRect, host: DuoHostViewController) -> CGRect {
+        if host.runtime.windowHost != nil {
+            // The app window is the content area, so screen coordinates shift by the content origin.
+            let content = host.geometry.contentFrame
+            return rect.offsetBy(dx: -content.minX, dy: -content.minY)
+        }
+        return host.screenView.convert(rect, to: host.view.window)
     }
 
     private func restoreAll() {
