@@ -228,7 +228,9 @@ view UIKit creates. Popovers anchored to a source view and the keyboard are stil
 
 ## Known limitations
 
-- Popovers anchored to a source view and the keyboard are still positioned by UIKit relative to the iPad window.
+- Popovers stay anchored to their source view instead of moving to the other half: moving them would leave the arrow
+  pointing at nothing. They are inside the app's window, so they stay on the emulated screen.
+- The keyboard is still presented by UIKit at full iPad width.
 - The status bar and home indicator belong to the iPad. Emulated safe areas come from the JSON (zero for now).
 - The 3D half-open view shows periodic snapshots, so interaction is disabled while it's on. Rendering live content on two
   rotated halves isn't possible with public API.

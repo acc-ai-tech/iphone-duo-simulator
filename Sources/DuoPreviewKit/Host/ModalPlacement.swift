@@ -79,7 +79,9 @@ final class ModalPlacement {
             stop()
             return
         }
-        guard let target = targetFrame else {
+        // Popovers are anchored to a source view; moving them would leave the arrow pointing at nothing. They are
+        // inside the app's window anyway, so they cannot escape the emulated screen.
+        guard !isShowingPopover(from: host), let target = targetFrame else {
             restoreAll()
             return
         }
@@ -129,6 +131,15 @@ final class ModalPlacement {
         case .none:
             return nil
         }
+    }
+
+    private func isShowingPopover(from host: DuoHostViewController) -> Bool {
+        var controller = host.contentController
+        while let presented = controller?.presentedViewController {
+            if presented.modalPresentationStyle == .popover { return true }
+            controller = presented
+        }
+        return false
     }
 
     /// Screen coordinates of the emulated device → coordinates of the window the presentation lives in.
